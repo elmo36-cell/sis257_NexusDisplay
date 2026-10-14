@@ -4,6 +4,11 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
+import { RolesModule } from './roles/roles.module';
+import { MarcasModule } from './marcas/marcas.module';
+import { UsuariosModule } from './usuarios/usuarios.module';
+import { DireccionesModule } from './direcciones/direcciones.module';
+import { SesionesModule } from './sesiones/sesiones.module';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -21,11 +26,12 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
       synchronize: true,
       autoLoadEntities: true,
     }),
-    ObserveModule.forRoot({
-      appKey: 'YOUR_APP_KEY',
-      appSecret: 'YOUR_APP_SECRET',
-      serviceId: 'backend_nexus-display',
-    }),
+    RolesModule,
+    MarcasModule,
+    UsuariosModule,
+    DireccionesModule,
+    SesionesModule,
+    SesionesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

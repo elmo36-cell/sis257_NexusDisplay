@@ -9,6 +9,11 @@ import { MarcasModule } from './marcas/marcas.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { DireccionesModule } from './direcciones/direcciones.module';
 import { SesionesModule } from './sesiones/sesiones.module';
+import { CategoriasModule } from './categorias/categorias.module';
+import { CalidadesModule } from './calidades/calidades.module';
+import { EspecificacionModule } from './especificacion/especificacion.module';
+import { ModeloModule } from './modelo/modelo.module';
+import { PantallaModule } from './pantalla/pantalla.module';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -32,6 +37,11 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     DireccionesModule,
     SesionesModule,
     SesionesModule,
+    CategoriasModule,
+    CalidadesModule,
+    EspecificacionModule,
+    ModeloModule,
+    PantallaModule,
   ],
   controllers: [AppController],
   providers: [AppService],

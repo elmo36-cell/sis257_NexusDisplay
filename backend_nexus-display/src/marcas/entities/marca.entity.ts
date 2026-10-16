@@ -1,4 +1,5 @@
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Modelo } from '../../modelo/entities/modelo.entity';
 
 @Entity('marcas')
 export class Marca {
@@ -19,4 +20,8 @@ export class Marca {
 
   @DeleteDateColumn({ name: 'fecha_eliminacion' })
   fechaEliminacion: Date;
+
+  @OneToMany(() => Modelo, modelo => modelo.marca)
+  modelos: Modelo[];
+
 }

@@ -1,20 +1,16 @@
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { Rol } from '../../roles/entities/rol.entity';
-import { Direccion } from '../../direcciones/entities/direccion.entity';
-import { Sesion } from '../../sesiones/entities/sesion.entity';
+import { Compra } from '../../compras/entities/compra.entity';
 
 @Entity('usuarios')
 export class Usuario {
   @PrimaryGeneratedColumn('identity')
   id: number;
 
-  @Column({ name: 'id_rol' })
+  @Column('int', { name: 'id_rol' })
   idRol: number;
 
-  @ManyToOne(() => Rol, (rol) => rol.usuarios, {
-    eager: true,
-    onDelete: 'RESTRICT',
-  })
+  @ManyToOne(() => Rol, rol => rol.usuarios, { onDelete: 'RESTRICT', onUpdate: 'CASCADE' })
   @JoinColumn({ name: 'id_rol' })
   rol: Rol;
 
@@ -30,21 +26,21 @@ export class Usuario {
   @Column('varchar', { length: 20, nullable: true })
   telefono: string;
 
-  @Column('boolean', { default: false, name: 'es_mayorista' })
-  esMayorista: boolean;
-
-  @OneToMany(() => Direccion, (direccion) => direccion.usuario)
-  direcciones: Direccion[];
-
-  @OneToMany(() => Sesion, (sesion) => sesion.usuario)
-  sesiones: Sesion[];
+  @Column('boolean', { default: true })
+  estado: boolean;
 
   @CreateDateColumn({ name: 'fecha_creacion' })
   fechaCreacion: Date;
 
-  @CreateDateColumn({ name: 'fecha_modificacion' })
+  @UpdateDateColumn({ name: 'fecha_modificacion' })
   fechaModificacion: Date;
 
   @DeleteDateColumn({ name: 'fecha_eliminacion' })
   fechaEliminacion: Date;
+
+  @OneToMany(() => Compra, compra => compra.usuario)
+  compras: Compra[];
+
+  @OneToMany(() => Venta, venta => venta.usuario)
+  ventas: Venta[];
 }

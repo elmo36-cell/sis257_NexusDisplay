@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateMarcaDto } from './dto/create-marca.dto';
 import { UpdateMarcaDto } from './dto/update-marca.dto';
 import { Marca } from './entities/marca.entity';
@@ -7,7 +11,7 @@ import { Repository } from 'typeorm';
 
 @Injectable()
 export class MarcasService {
- constructor(
+  constructor(
     @InjectRepository(Marca) private marcasRepository: Repository<Marca>,
   ) {}
 
@@ -34,6 +38,13 @@ export class MarcasService {
 
   async update(id: number, updateMarcaDto: UpdateMarcaDto): Promise<Marca> {
     const marca = await this.findOne(id);
+    if (updateMarcaDto.nombre && updateMarcaDto.nombre !== marca.nombre) {
+      const marcaExistente = await this.marcasRepository.findOneBy({
+        nombre: updateMarcaDto.nombre,
+      });
+      if (marcaExistente)
+        throw new ConflictException('Ya existe otra marca con ese nombre');
+    }
     Object.assign(marca, updateMarcaDto);
     return this.marcasRepository.save(marca);
   }

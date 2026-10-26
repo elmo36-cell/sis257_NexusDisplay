@@ -1,29 +1,3 @@
-<<<<<<< HEAD
-import { Injectable } from '@nestjs/common';
-import { CreateCategoriaDto } from './dto/create-categoria.dto';
-import { UpdateCategoriaDto } from './dto/update-categoria.dto';
-
-@Injectable()
-export class CategoriasService {
-  create(createCategoriaDto: CreateCategoriaDto) {
-    return 'This action adds a new categoria';
-  }
-
-  findAll() {
-    return `This action returns all categorias`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} categoria`;
-  }
-
-  update(id: number, updateCategoriaDto: UpdateCategoriaDto) {
-    return `This action updates a #${id} categoria`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} categoria`;
-=======
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateCategoriaDto } from './dto/create-categoria.dto';
 import { UpdateCategoriaDto } from './dto/update-categoria.dto';
@@ -82,6 +56,5 @@ export class CategoriasService {
   async remove(id: number): Promise<Categoria> {
     const categoria = await this.findOne(id);
     return this.categoriasRepository.softRemove(categoria);
->>>>>>> 58ab75d (feat: Se corrigio y elimino tablas sin uso.Se creo tablas, catálogo, proveedores, compras y detalles_compra.)
   }
 }

@@ -1,6 +1,7 @@
 import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { Rol } from '../../roles/entities/rol.entity';
 import { Compra } from '../../compras/entities/compra.entity';
+import { Venta } from '../../ventas/entities/venta.entity';
 
 @Entity('usuarios')
 export class Usuario {
@@ -41,6 +42,6 @@ export class Usuario {
   @OneToMany(() => Compra, compra => compra.usuario)
   compras: Compra[];
 
-  @OneToMany(() => Venta, venta => venta.usuario)
+  @OneToMany(() => Venta, venta => venta.idUsuario)
   ventas: Venta[];
 }

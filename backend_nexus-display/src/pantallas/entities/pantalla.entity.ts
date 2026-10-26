@@ -75,7 +75,7 @@ export class Pantalla {
   @OneToMany(() => DetalleCompra, (detalleCompra) => detalleCompra.pantalla)
   detallesCompra: DetalleCompra[];
 
-  @OneToMany(
+ /*@OneToMany(
     () => InventarioAlmacen,
     (inventarioAlmacen) => inventarioAlmacen.pantalla,
   )
@@ -83,4 +83,5 @@ export class Pantalla {
 
   @OneToMany(() => DetalleVenta, (detalleVenta) => detalleVenta.pantalla)
   detallesVenta: DetalleVenta[];
+  */
 }

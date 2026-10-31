@@ -15,6 +15,9 @@ import { ProveedoresModule } from './proveedores/proveedores.module';
 import { ComprasModule } from './compras/compras.module';
 import { DetallesCompraModule } from './detalles-compra/detalles-compra.module';
 import { VentasModule } from './ventas/ventas.module';
+import { DetallesVentaModule } from './detalles-venta/detalles-venta.module';
+import { InventarioAlmacenModule } from './inventario-almacen/inventario-almacen.module';
+import { AlmacenesModule } from './almacenes/almacenes.module';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -42,7 +45,10 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     ProveedoresModule,
     ComprasModule,
     DetallesCompraModule,
+    DetallesVentaModule,
     VentasModule,
+    InventarioAlmacenModule,
+    AlmacenesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

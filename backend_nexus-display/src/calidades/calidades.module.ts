@@ -1,8 +1,8 @@
-import { Module } from '@nestjs/common';
-import { CalidadesService } from './calidades.service';
-import { CalidadesController } from './calidades.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Calidad } from './entities/calidad.entity';
+import { CalidadesController } from './calidades.controller';
+import { CalidadesService } from './calidades.service';
+import { Module } from '@nestjs/common';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Calidad])],

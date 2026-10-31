@@ -35,6 +35,4 @@ export class Marca {
   @OneToMany(() => Modelo, modelo => modelo.marca)
   modelos: Modelo[];
 
-  @OneToMany(() => Modelo, (modelo) => modelo.marca)
-  modelosCelular: Modelo[];
 }

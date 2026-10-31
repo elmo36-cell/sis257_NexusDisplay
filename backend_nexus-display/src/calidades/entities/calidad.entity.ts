@@ -1,7 +1,15 @@
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import { Pantalla } from "../../pantallas/entities/pantalla.entity";
+import {
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { Pantalla } from '../../pantallas/entities/pantalla.entity';
 
-@Entity('calidades_repuesto')
+@Entity('calidades')
 export class Calidad {
   @PrimaryGeneratedColumn('identity')
   id: number;
@@ -27,6 +35,6 @@ export class Calidad {
   @DeleteDateColumn({ name: 'fecha_eliminacion' })
   fechaEliminacion: Date;
 
-  @OneToMany(() => Pantalla, (pantalla) => pantalla.calidad)
+  @OneToMany(() => Pantalla, pantalla => pantalla.calidad)
   pantallas: Pantalla[];
 }

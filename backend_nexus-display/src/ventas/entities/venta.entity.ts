@@ -1,32 +1,36 @@
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
-import { Usuario } from '../../usuarios/entities/usuario.entity';
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Usuario } from "../../usuarios/entities/usuario.entity";
+import { DetalleVenta } from "../../detalles-venta/entities/detalle-venta.entity";
 
 @Entity('ventas')
 export class Venta {
-
   @PrimaryGeneratedColumn('identity')
   id: number;
 
-  @Column('int', {name: 'id_usuario'})
+  @Column('int', { name: 'id_usuario' })
   idUsuario: number;
 
-  @Column('varchar',{ length:50})
-  fechaVenta: string;
+  @ManyToOne(() => Usuario, (usuario) => usuario.ventas, {
+    onDelete: 'RESTRICT',
+    onUpdate: 'CASCADE',
+  })
+  @JoinColumn({ name: 'id_usuario' })
+  usuario: Usuario;
 
-  @Column('varchar', { length:20 })
+  @CreateDateColumn({ name: 'fecha_venta' })
+  fechaVenta: Date;
+
+  @Column('varchar', { length: 20, name: 'tipo_venta' })
   tipoVenta: string;
 
-  @Column('varchar', { length:99 })
+  @Column('decimal', { precision: 12, scale: 2 })
   total: number;
 
-  @Column('varchar', { length:30 })
+  @Column('varchar', { length: 30 })
   estado: string;
 
-  @Column('varchar', {length:50 })
+  @Column('text', { nullable: true })
   observaciones: string;
-
-  @CreateDateColumn({ name: 'fecha_creacion' })
-  fechaCreacion: Date;
 
   @UpdateDateColumn({ name: 'fecha_modificacion' })
   fechaModificacion: Date;
@@ -34,10 +38,6 @@ export class Venta {
   @DeleteDateColumn({ name: 'fecha_eliminacion' })
   fechaEliminacion: Date;
 
-  @ManyToOne(() => Usuario, (usuario) => usuario.compras, {
-    onDelete: 'RESTRICT',
-    onUpdate: 'CASCADE',
-  })
-  @JoinColumn({name:'id_usuario'})
-  usuario:Usuario
+  @OneToMany(() => DetalleVenta, (detalleVenta) => detalleVenta.venta)
+  detallesVenta: DetalleVenta[];
 }

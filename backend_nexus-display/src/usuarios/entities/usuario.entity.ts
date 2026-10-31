@@ -42,6 +42,6 @@ export class Usuario {
   @OneToMany(() => Compra, compra => compra.usuario)
   compras: Compra[];
 
-  @OneToMany(() => Venta, venta => venta.idUsuario)
+  @OneToMany(() => Venta, venta => venta.usuario)
   ventas: Venta[];
 }

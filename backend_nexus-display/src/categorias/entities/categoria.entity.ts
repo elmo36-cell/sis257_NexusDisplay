@@ -5,7 +5,7 @@ import { Pantalla } from "../../pantallas/entities/pantalla.entity";
 export class Categoria {
   @PrimaryGeneratedColumn('identity')
   id: number;
-
+  
   @Column('varchar', { length: 50, unique: true })
   nombre: string;
 
@@ -19,11 +19,13 @@ export class Categoria {
   fechaCreacion: Date;
 
   @UpdateDateColumn({ name: 'fecha_modificacion' })
+
   fechaModificacion: Date;
 
   @DeleteDateColumn({ name: 'fecha_eliminacion' })
   fechaEliminacion: Date;
 
-  @OneToMany(() => Pantalla, (pantalla) => pantalla.categoria)
+  @OneToMany(() => Pantalla, pantalla => pantalla.categoria)
   pantallas: Pantalla[];
+  
 }

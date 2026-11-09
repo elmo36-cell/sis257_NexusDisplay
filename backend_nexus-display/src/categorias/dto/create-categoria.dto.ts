@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-export class CreateCategoriaDto {}
-=======
 import { ApiProperty } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
 import { IsBoolean, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from "class-validator";
@@ -35,4 +32,3 @@ export class CreateCategoriaDto {
   @IsBoolean({ message: 'El estado debe ser de tipo booleano' })
   readonly estado?: boolean;
 }
->>>>>>> 58ab75d (feat: Se corrigio y elimino tablas sin uso.Se creo tablas, catálogo, proveedores, compras y detalles_compra.)

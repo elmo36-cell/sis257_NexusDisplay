@@ -3,6 +3,8 @@ import { Modelo } from "../../modelos/entities/modelo.entity";
 import { Categoria } from "../../categorias/entities/categoria.entity";
 import { Calidad } from "../../calidades/entities/calidad.entity";
 import { DetalleCompra } from "../../detalles-compra/entities/detalle-compra.entity";
+import { InventarioAlmacen } from "../../inventario-almacen/entities/inventario-almacen.entity";
+import { DetalleVenta } from "../../detalles-venta/entities/detalle-venta.entity";
 
 @Entity('pantallas')
 export class Pantalla {

@@ -7,7 +7,10 @@ import { computed, ref, watch } from 'vue'
 const ENDPOINT = 'proveedores'
 const props = defineProps({
   mostrar: Boolean,
-  proveedor: { type: Object as () => Proveedor, default: () => ({}) as Proveedor },
+  proveedor: {
+    type: Object as () => Proveedor,
+    default: () => ({}) as Proveedor,
+  },
   modoEdicion: Boolean,
 })
 const emit = defineEmits(['guardar', 'close'])
@@ -31,9 +34,9 @@ async function handleSave() {
   try {
     const body = {
       nombre: proveedor.value.nombre,
+      nit: proveedor.value.nit,
       telefono: proveedor.value.telefono,
       direccion: proveedor.value.direccion,
-      correo: proveedor.value.correo,
     }
     if (props.modoEdicion) {
       await http.patch(`${ENDPOINT}/${proveedor.value.id}`, body)
@@ -44,35 +47,35 @@ async function handleSave() {
     proveedor.value = {} as Proveedor
     dialogVisible.value = false
   } catch (error: any) {
-    alert(error?.response?.data?.message || 'Error al guardar')
+    alert(error?.response?.data?.message || 'Error al guardar proveedor')
   }
 }
 </script>
 
 <template>
-  <div class="card flex justify-center">
-    <Dialog v-model:visible="dialogVisible" :header="props.modoEdicion ? 'Editar Proveedor' : 'Crear Proveedor'"
-      style="width: 28rem">
-      <div class="flex items-center gap-4 mb-4">
-        <label for="nombre" class="font-semibold w-3">Nombre</label>
-        <InputText id="nombre" v-model="proveedor.nombre" class="flex-auto" autofocus />
+  <Dialog v-model:visible="dialogVisible" :header="props.modoEdicion ? 'Editar Proveedor' : 'Crear Proveedor'"
+    style="width: 25rem" modal>
+    <div class="flex flex-column gap-3">
+      <div>
+        <label class="font-semibold block mb-1">Nombre / Empresa</label>
+        <InputText v-model="proveedor.nombre" class="w-full" autofocus />
       </div>
-      <div class="flex items-center gap-4 mb-4">
-        <label for="telefono" class="font-semibold w-3">Teléfono</label>
-        <InputText id="telefono" v-model="proveedor.telefono" class="flex-auto" />
+      <div>
+        <label class="font-semibold block mb-1">NIT</label>
+        <InputText v-model="proveedor.nit" class="w-full" />
       </div>
-      <div class="flex items-center gap-4 mb-4">
-        <label for="direccion" class="font-semibold w-3">Dirección</label>
-        <InputText id="direccion" v-model="proveedor.direccion" class="flex-auto" />
+      <div>
+        <label class="font-semibold block mb-1">Teléfono</label>
+        <InputText v-model="proveedor.telefono" class="w-full" />
       </div>
-      <div class="flex items-center gap-4 mb-4">
-        <label for="correo" class="font-semibold w-3">Correo</label>
-        <InputText id="correo" v-model="proveedor.correo" class="flex-auto" />
+      <div>
+        <label class="font-semibold block mb-1">Dirección</label>
+        <InputText v-model="proveedor.direccion" class="w-full" />
       </div>
       <div class="flex justify-end gap-2">
         <Button type="button" label="Cancelar" icon="pi pi-times" severity="secondary" @click="dialogVisible = false" />
         <Button type="button" label="Guardar" icon="pi pi-save" @click="handleSave" />
       </div>
-    </Dialog>
-  </div>
+    </div>
+  </Dialog>
 </template>

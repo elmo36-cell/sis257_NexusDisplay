@@ -8,6 +8,6 @@ import { InventarioAlmacen } from './entities/inventario-almacen.entity';
   imports: [TypeOrmModule.forFeature([InventarioAlmacen])],
   controllers: [InventarioAlmacenController],
   providers: [InventarioAlmacenService],
-  exports: [InventarioAlmacenService],
+  exports: [InventarioAlmacenService, TypeOrmModule],
 })
 export class InventarioAlmacenModule {}

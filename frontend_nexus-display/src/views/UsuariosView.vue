@@ -1,35 +1,60 @@
 <script setup lang="ts">
 import UsuarioList from '@/components/usuario/UsuarioList.vue'
 import UsuarioSave from '@/components/usuario/UsuarioSave.vue'
+import { useAuthStore } from '@/stores'
 import Button from 'primevue/button'
 import { ref } from 'vue'
+import type { Usuario } from '@/models/usuario'
 
-const mostrarDialog = ref<boolean>(false)
-const listRef = ref<typeof UsuarioList | null>(null)
-const itemEdit = ref<any>(null)
+const authStore = useAuthStore()
+const mostrarDialog = ref(false)
+const usuarioListRef = ref<typeof UsuarioList | null>(null)
+const usuarioEdit = ref<Usuario | undefined>(undefined)
 
 function handleCreate() {
-  itemEdit.value = null
+  usuarioEdit.value = undefined
   mostrarDialog.value = true
 }
-function handleEdit(item: any) {
-  itemEdit.value = item
+
+function handleEdit(usuario: Usuario) {
+  usuarioEdit.value = usuario
   mostrarDialog.value = true
 }
+
 function handleCloseDialog() {
   mostrarDialog.value = false
 }
+
 function handleGuardar() {
-  listRef.value?.obtenerLista()
+  usuarioListRef.value?.obtenerLista()
 }
 </script>
 
 <template>
-  <div class="container py-5 mt-5">
-    <h2>Usuarios</h2>
-    <Button label="Crear Nuevo" icon="pi pi-plus" @click="handleCreate" />
-    <UsuarioList ref="listRef" @edit="handleEdit" />
-    <UsuarioSave :mostrar="mostrarDialog" :usuario="itemEdit" :modoEdicion="!!itemEdit" @guardar="handleGuardar"
+  <div class="container mx-auto p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h2 class="m-0">
+          {{
+            authStore.rol === 'ADMIN'
+              ? 'Administración de Usuarios y Roles'
+              : 'Gestión y Registro de Clientes'
+          }}
+        </h2>
+        <p class="text-muted small m-0 mt-1">
+          {{
+            authStore.rol === 'ADMIN'
+              ? 'Crea y edita administradores, vendedores y clientes.'
+              : 'Como vendedor puedes visualizar la cartera de clientes y añadir nuevos clientes.'
+          }}
+        </p>
+      </div>
+      <Button :label="authStore.rol === 'ADMIN' ? 'Crear Usuario' : 'Añadir Nuevo Cliente'" @click="handleCreate" />
+    </div>
+
+    <UsuarioList ref="usuarioListRef" @edit="handleEdit" />
+
+    <UsuarioSave :mostrar="mostrarDialog" :usuario="usuarioEdit" :modoEdicion="!!usuarioEdit" @guardar="handleGuardar"
       @close="handleCloseDialog" />
   </div>
 </template>

@@ -12,9 +12,6 @@ export class Categoria {
   @Column('varchar', { length: 255 })
   descripcion: string;
 
-  @Column('boolean', { default: true })
-  estado: boolean;
-
   @CreateDateColumn({ name: 'fecha_creacion' })
   fechaCreacion: Date;
 

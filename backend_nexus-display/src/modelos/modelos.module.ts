@@ -8,6 +8,6 @@ import { Modelo } from './entities/modelo.entity';
   imports: [TypeOrmModule.forFeature([Modelo])],
   controllers: [ModelosController],
   providers: [ModelosService],
-  exports: [ModelosService],
+  exports: [ModelosService, TypeOrmModule],
 })
 export class ModelosModule {}

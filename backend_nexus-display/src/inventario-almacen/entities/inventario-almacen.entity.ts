@@ -10,28 +10,11 @@ export class InventarioAlmacen {
   @Column('int', { name: 'id_pantalla' })
   idPantalla: number;
 
-  @ManyToOne(() => Pantalla, (pantalla) => pantalla.inventariosAlmacen, {
-    onDelete: 'RESTRICT',
-    onUpdate: 'CASCADE',
-  })
-  @JoinColumn({ name: 'id_pantalla' })
-  pantalla: Pantalla;
-
   @Column('int', { name: 'id_almacen' })
   idAlmacen: number;
 
-  @ManyToOne(() => Almacen, (almacen) => almacen.inventarioAlmacenes, {
-    onDelete: 'RESTRICT',
-    onUpdate: 'CASCADE',
-  })
-  @JoinColumn({ name: 'id_almacen' })
-  almacen: Almacen;
-
-  @Column('int', { name: 'stock_actual', default: 0 })
-  stockActual: number;
-
-  @Column('int', { name: 'stock_minimo', default: 0 })
-  stockMinimo: number;
+  @Column('int', { default: 0 })
+  cantidad: number;
 
   @CreateDateColumn({ name: 'fecha_actualizacion' })
   fechaActualizacion: Date;
@@ -41,4 +24,12 @@ export class InventarioAlmacen {
 
   @DeleteDateColumn({ name: 'fecha_eliminacion' })
   fechaEliminacion: Date;
+  
+  @ManyToOne(() => Pantalla, pantalla => pantalla.inventarios)
+  @JoinColumn({ name: 'id_pantalla', referencedColumnName: 'id' })
+  pantalla: Pantalla;
+
+  @ManyToOne(() => Almacen, almacen => almacen.inventarios)
+  @JoinColumn({ name: 'id_almacen', referencedColumnName: 'id' })
+  almacen: Almacen;
 }

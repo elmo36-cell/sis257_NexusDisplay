@@ -5,7 +5,7 @@ export interface InventarioAlmacen {
   id: number
   idPantalla: number
   idAlmacen: number
-  stock: number
-  pantalla?: Pantalla
-  almacen?: Almacen
+  cantidad: number
+  pantalla: Pantalla
+  almacen: Almacen
 }

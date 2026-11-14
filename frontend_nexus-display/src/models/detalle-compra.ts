@@ -6,7 +6,7 @@ export interface DetalleCompra {
   idCompra: number
   idPantalla: number
   cantidad: number
-  precioUnitario: number
+  costoUnitario: number
   subtotal: number
   compra?: Compra
   pantalla?: Pantalla

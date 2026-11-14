@@ -12,10 +12,8 @@ const busqueda = ref<string>('')
 const emit = defineEmits(['edit'])
 
 const categoriasFiltradas = computed(() => {
-  return categorias.value.filter(
-    (c) =>
-      c.nombre.toLowerCase().includes(busqueda.value.toLowerCase()) ||
-      c.descripcion?.toLowerCase().includes(busqueda.value.toLowerCase()),
+  return categorias.value.filter((c) =>
+    c.nombre.toLowerCase().includes(busqueda.value.toLowerCase()),
   )
 })
 
@@ -53,34 +51,32 @@ defineExpose({ obtenerLista })
       </InputGroup>
     </div>
 
-    <table class="table table-bordered table-striped">
+    <table class="w-full border-collapse">
       <thead>
-        <tr>
-          <th>Nro.</th>
-          <th>Nombre</th>
-          <th>Descripción</th>
-          <th>Acciones</th>
+        <tr class="surface-200 text-left">
+          <th class="p-2">Nro.</th>
+          <th class="p-2">Nombre</th>
+          <th class="p-2">Descripción</th>
+          <th class="p-2">Acciones</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(categoria, index) in categoriasFiltradas" :key="categoria.id">
-          <td>{{ index + 1 }}</td>
-          <td>{{ categoria.nombre }}</td>
-          <td>{{ categoria.descripcion }}</td>
-          <td>
+        <tr v-for="(categoria, index) in categoriasFiltradas" :key="categoria.id"
+          class="border-bottom-1 surface-border">
+          <td class="p-2">{{ index + 1 }}</td>
+          <td class="p-2 font-semibold">{{ categoria.nombre }}</td>
+          <td class="p-2">{{ categoria.descripcion }}</td>
+          <td class="p-2">
             <Button icon="pi pi-pencil" aria-label="Editar" text @click="emitirEdicion(categoria)" />
             <Button icon="pi pi-trash" aria-label="Eliminar" text severity="danger"
               @click="mostrarEliminarConfirm(categoria)" />
           </td>
         </tr>
-        <tr v-if="categoriasFiltradas.length === 0">
-          <td colspan="4">No se encontraron resultados.</td>
-        </tr>
       </tbody>
     </table>
 
     <Dialog v-model:visible="mostrarConfirmDialog" header="Confirmar Eliminación" :style="{ width: '25rem' }">
-      <p>¿Estás seguro de que deseas eliminar la categoría <b>{{ categoriaDelete?.nombre }}</b>?</p>
+      <p>¿Estás seguro de eliminar la categoría <strong>{{ categoriaDelete?.nombre }}</strong>?</p>
       <div class="flex justify-end gap-2">
         <Button type="button" label="Cancelar" severity="secondary" @click="mostrarConfirmDialog = false" />
         <Button type="button" label="Eliminar" severity="danger" @click="eliminar" />

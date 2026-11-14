@@ -47,40 +47,45 @@ defineExpose({ obtenerLista })
     <div class="col-7 pl-0 mt-3 mb-3">
       <InputGroup>
         <InputGroupAddon><i class="pi pi-search"></i></InputGroupAddon>
-        <InputText v-model="busqueda" type="text" placeholder="Buscar por nombre" />
+        <InputText v-model="busqueda" type="text" placeholder="Buscar por nombre de marca" />
       </InputGroup>
     </div>
 
-    <table class="table table-bordered table-striped">
+    <table class="w-full border-collapse">
       <thead>
-        <tr>
-          <th>Nro.</th>
-          <th>Nombre</th>
-          <th>Acciones</th>
+        <tr class="surface-200 text-left">
+          <th class="p-2">Nro.</th>
+          <th class="p-2">Logo</th>
+          <th class="p-2">Nombre</th>
+          <th class="p-2">Acciones</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(marca, index) in marcasFiltradas" :key="marca.id">
-          <td>{{ index + 1 }}</td>
-          <td>{{ marca.nombre }}</td>
-          <td>
+        <tr v-for="(marca, index) in marcasFiltradas" :key="marca.id" class="border-bottom-1 surface-border">
+          <td class="p-2">{{ index + 1 }}</td>
+          <td class="p-2">
+            <img :src="marca.fotografia" :alt="marca.nombre" width="100" height="40"
+              style="width: 100px; height: 40px; object-fit: contain; display: block;" class="border-round" />
+          </td>
+          <td class="p-2 font-semibold">{{ marca.nombre }}</td>
+          <td class="p-2">
             <Button icon="pi pi-pencil" aria-label="Editar" text @click="emitirEdicion(marca)" />
             <Button icon="pi pi-trash" aria-label="Eliminar" text severity="danger"
               @click="mostrarEliminarConfirm(marca)" />
           </td>
         </tr>
         <tr v-if="marcasFiltradas.length === 0">
-          <td colspan="3">No se encontraron resultados.</td>
+          <td colspan="4" class="p-3 text-center">No se encontraron resultados.</td>
         </tr>
       </tbody>
     </table>
 
     <Dialog v-model:visible="mostrarConfirmDialog" header="Confirmar Eliminación" :style="{ width: '25rem' }">
-      <p>¿Estás seguro de que deseas eliminar la marca <b>{{ marcaDelete?.nombre }}</b>?</p>
+      <p>¿Estás seguro de que deseas eliminar la marca <strong>{{ marcaDelete?.nombre }}</strong>?</p>
       <div class="flex justify-end gap-2">
         <Button type="button" label="Cancelar" severity="secondary" @click="mostrarConfirmDialog = false" />
         <Button type="button" label="Eliminar" severity="danger" @click="eliminar" />
       </div>
     </Dialog>
   </div>
-</template>
+</template>F

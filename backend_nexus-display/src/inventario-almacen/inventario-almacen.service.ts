@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateInventarioAlmacenDto } from './dto/create-inventario-almacen.dto';
 import { UpdateInventarioAlmacenDto } from './dto/update-inventario-almacen.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,38 +13,46 @@ import { Repository } from 'typeorm';
 export class InventarioAlmacenService {
   constructor(
     @InjectRepository(InventarioAlmacen)
-    private inventarioRepository: Repository<InventarioAlmacen>,
+    private inventarioAlmacenRepository: Repository<InventarioAlmacen>,
   ) {}
 
   async create(
     createInventarioAlmacenDto: CreateInventarioAlmacenDto,
   ): Promise<InventarioAlmacen> {
-    const inventario = new InventarioAlmacen();
+    let inventario = await this.inventarioAlmacenRepository.findOneBy({
+      idPantalla: createInventarioAlmacenDto.idPantalla,
+      idAlmacen: createInventarioAlmacenDto.idAlmacen,
+    });
+    if (inventario) {
+      throw new ConflictException(
+        'El registro de inventario ya existe en este almacén',
+      );
+    }
+
+    inventario = new InventarioAlmacen();
     Object.assign(inventario, createInventarioAlmacenDto);
-    return this.inventarioRepository.save(inventario);
+    return this.inventarioAlmacenRepository.save(inventario);
   }
 
   async findAll(): Promise<InventarioAlmacen[]> {
-    return this.inventarioRepository.find({
+    return this.inventarioAlmacenRepository.find({
       relations: {
-        pantalla: true,
+        pantalla: { modelo: { marca: true }, calidad: true, categoria: true },
         almacen: true,
       },
     });
   }
 
   async findOne(id: number): Promise<InventarioAlmacen> {
-    const inventario = await this.inventarioRepository.findOne({
+    const inventario = await this.inventarioAlmacenRepository.findOne({
       where: { id },
       relations: {
-        pantalla: true,
+        pantalla: { modelo: { marca: true }, calidad: true, categoria: true },
         almacen: true,
       },
     });
     if (!inventario)
-      throw new NotFoundException(
-        'El registro de inventario en almacén no existe',
-      );
+      throw new NotFoundException('El registro de inventario no existe');
     return inventario;
   }
 
@@ -50,11 +62,11 @@ export class InventarioAlmacenService {
   ): Promise<InventarioAlmacen> {
     const inventario = await this.findOne(id);
     Object.assign(inventario, updateInventarioAlmacenDto);
-    return this.inventarioRepository.save(inventario);
+    return this.inventarioAlmacenRepository.save(inventario);
   }
 
   async remove(id: number): Promise<InventarioAlmacen> {
     const inventario = await this.findOne(id);
-    return this.inventarioRepository.softRemove(inventario);
+    return this.inventarioAlmacenRepository.softRemove(inventario);
   }
 }

@@ -1,5 +1,13 @@
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import { Compra } from "../../compras/entities/compra.entity";
+import {
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { Compra } from '../../compras/entities/compra.entity';
 
 @Entity('proveedores')
 export class Proveedor {
@@ -7,25 +15,16 @@ export class Proveedor {
   id: number;
 
   @Column('varchar', { length: 120, name: 'nombre_empresa' })
-  nombreEmpresa: string;
+  nombre: string;
 
-  @Column('varchar', { length: 100 })
-  contacto: string;
+  @Column('varchar', { length: 25 })
+  nit: string;
 
-  @Column('varchar', { length: 20 })
+  @Column('varchar', { length: 20, nullable: true })
   telefono: string;
 
-  @Column('varchar', { length: 100, unique: true })
-  email: string;
-
-  @Column('varchar', { length: 200 })
+  @Column('varchar', { length: 150, nullable: true })
   direccion: string;
-
-  @Column('varchar', { length: 50, name: 'pais_origen' })
-  paisOrigen: string;
-
-  @Column('boolean', { default: true })
-  estado: boolean;
 
   @CreateDateColumn({ name: 'fecha_creacion' })
   fechaCreacion: Date;
@@ -36,6 +35,6 @@ export class Proveedor {
   @DeleteDateColumn({ name: 'fecha_eliminacion' })
   fechaEliminacion: Date;
 
-  @OneToMany(() => Compra, (compra) => compra.proveedor)
+  @OneToMany(() => Compra, (compras) => compras.proveedor)
   compras: Compra[];
 }

@@ -10,25 +10,25 @@ export class ModelosService {
   constructor(@InjectRepository(Modelo) private modelosRepository: Repository<Modelo>) {}
 
   async create(createModeloDto: CreateModeloDto): Promise<Modelo> {
-    const modeloExistente = await this.modelosRepository.findOneBy({
-      nombre: createModeloDto.nombre,
+    let modelo = await this.modelosRepository.findOneBy({
       idMarca: createModeloDto.idMarca,
+      nombre: createModeloDto.nombre,
     });
-    if (modeloExistente) throw new ConflictException('El modelo ya existe para esta marca');
+    if (modelo) throw new ConflictException('El modelo ya existe');
 
-    const modelo = new Modelo();
+    modelo = new Modelo();
     Object.assign(modelo, createModeloDto);
     return this.modelosRepository.save(modelo);
   }
 
   async findAll(): Promise<Modelo[]> {
-    return this.modelosRepository.find({ relations: {'marca':true} });
+    return this.modelosRepository.find({ relations: { marca: true } });
   }
 
   async findOne(id: number): Promise<Modelo> {
     const modelo = await this.modelosRepository.findOne({
       where: { id },
-      relations: {'marca':true},
+      relations: { marca: true },
     });
     if (!modelo) throw new NotFoundException('El modelo no existe');
     return modelo;

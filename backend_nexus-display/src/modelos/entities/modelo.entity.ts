@@ -10,21 +10,14 @@ export class Modelo {
   @Column('int', { name: 'id_marca' })
   idMarca: number;
 
-  @ManyToOne(() => Marca, (marca) => marca.modelos, {
-    onDelete: 'RESTRICT',
-    onUpdate: 'CASCADE',
-  })
-  @JoinColumn({ name: 'id_marca' })
-  marca: Marca;
-
   @Column('varchar', { length: 100 })
   nombre: string;
 
-  @Column('int', { name: 'anio_lanzamiento' })
-  anioLanzamiento: number;
-
-  @Column('boolean', { default: true })
-  estado: boolean;
+  @Column('varchar', {
+    length: 800,
+    default: 'https://placehold.co/400x400/0f172a/38bdf8?text=Modelo',
+  })
+  fotografia: string;
 
   @CreateDateColumn({ name: 'fecha_creacion' })
   fechaCreacion: Date;
@@ -35,6 +28,10 @@ export class Modelo {
   @DeleteDateColumn({ name: 'fecha_eliminacion' })
   fechaEliminacion: Date;
 
-  @OneToMany(() => Pantalla, (pantalla) => pantalla.modelo)
+  @ManyToOne(() => Marca, marca => marca.modelos)
+  @JoinColumn({ name: 'id_marca', referencedColumnName: 'id' })
+  marca: Marca;
+
+  @OneToMany(() => Pantalla, pantallas => pantallas.modelo)
   pantallas: Pantalla[];
 }

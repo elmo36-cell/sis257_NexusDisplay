@@ -9,6 +9,6 @@ import { DetalleCompra } from '../detalles-compra/entities/detalle-compra.entity
   imports: [TypeOrmModule.forFeature([Compra, DetalleCompra])],
   controllers: [ComprasController],
   providers: [ComprasService],
-  exports: [ComprasService],
+  exports: [ComprasService, TypeOrmModule],
 })
 export class ComprasModule {}

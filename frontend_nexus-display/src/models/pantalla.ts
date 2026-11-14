@@ -1,16 +1,21 @@
 import type { Modelo } from './modelo'
 import type { Calidad } from './calidad'
 import type { Categoria } from './categoria'
+import type { InventarioAlmacen } from './inventario-almacen'
 
 export interface Pantalla {
   id: number
-  nombre: string
-  descripcion: string
-  precio: number
   idModelo: number
   idCalidad: number
   idCategoria: number
-  modelo?: Modelo
-  calidad?: Calidad
-  categoria?: Categoria
+  nombre: string
+  codigo: string
+  color: string
+  conMarco: boolean
+  fotografia: string
+  precioVenta: number
+  modelo: Modelo
+  calidad: Calidad
+  categoria: Categoria
+  inventarios?: InventarioAlmacen[]
 }

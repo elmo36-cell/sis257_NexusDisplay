@@ -20,19 +20,10 @@ export class CreateMarcaDto {
   )
   readonly nombre: string;
 
-  @ApiProperty({ example: 'Fabricante de dispositivos iPhone y accesorios' })
-  @IsNotEmpty({ message: 'La descripción es obligatoria' })
-  @IsString({ message: 'La descripción debe ser de tipo cadena' })
-  @MaxLength(255, {
-    message: 'La descripción no puede tener más de 255 caracteres',
-  })
-  @Transform(({ value }): string | undefined =>
-    typeof value === 'string' ? value.trim() : value,
-  )
-  readonly descripcion: string;
-
-  @ApiProperty({ example: true, required: false })
+  @ApiProperty({ required: false })
   @IsOptional()
-  @IsBoolean({ message: 'El estado debe ser de tipo booleano' })
-  readonly estado?: boolean;
+  @IsString({ message: 'La fotografia debe ser de tipo cadena' })
+  @MaxLength(800, { message: 'La fotografia no puede tener más de 800 caracteres' })
+  @Transform(({ value }): string | undefined => (typeof value == 'string' ? value.trim() : value))
+  readonly fotografia?: string;
 }

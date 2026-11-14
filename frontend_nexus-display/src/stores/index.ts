@@ -1,41 +1,66 @@
 import { defineStore } from 'pinia'
-import { getTokenFromLocalStorage } from '@/helpers'
+import { getTokenFromLocalStorage, parseJwt } from '@/helpers'
 import http from '@/plugins/axios'
 import router from '@/router'
 
+function obtenerDatosDesdeToken(): { user: string; rol: string; userId: number } {
+  const token = getTokenFromLocalStorage()
+  if (!token) {
+    return { user: '', rol: '', userId: 0 }
+  }
+  const payload = parseJwt(token)
+  return {
+    user: payload?.nombreUsuario || localStorage.getItem('user') || '',
+    rol: payload?.rol || localStorage.getItem('rol') || '',
+    userId: Number(payload?.sub || localStorage.getItem('userId') || 0),
+  }
+}
+
 const useAuthStore = defineStore('auth', {
-  state: () => ({
-    user: localStorage.getItem('user') || '',
-    token: getTokenFromLocalStorage(),
-    returnUrl: '' as string | null,
-  }),
+  state: () => {
+    const datos = obtenerDatosDesdeToken()
+    return {
+      user: datos.user,
+      rol: datos.rol,
+      userId: datos.userId,
+      token: getTokenFromLocalStorage(),
+      returnUrl: null as string | null,
+    }
+  },
   getters: {
-    isAuthenticated: (state) => !!state.token,
+    isAdmin: (state) => state.rol === 'ADMIN',
+    isVendedor: (state) => state.rol === 'VENDEDOR' || state.rol === 'ADMIN',
+    isCliente: (state) => state.rol === 'CLIENTE',
   },
   actions: {
-    async login(usuario: string, clave: string) {
-      try {
-        const response = await http.post('auth/login', { usuario, clave })
+    async login(nombreUsuario: string, clave: string) {
+      const response = await http.post('auth/login', { nombreUsuario, clave })
+      this.token = response.data.access_token
 
-        this.user = response.data.usuario || response.data.user || usuario
-        this.token = response.data.access_token || response.data.token
+      const payload = parseJwt(this.token || '')
+      this.rol = response.data.usuario?.rol || payload?.rol || 'CLIENTE'
+      this.user = response.data.usuario?.nombreUsuario || payload?.nombreUsuario || nombreUsuario
+      this.userId = Number(response.data.usuario?.id || payload?.sub || 1)
 
-        localStorage.setItem(
-          'user',
-          typeof this.user === 'object' ? JSON.stringify(this.user) : this.user,
-        )
-        localStorage.setItem('token', this.token || '')
+      localStorage.setItem('token', this.token || '')
+      localStorage.setItem('user', this.user)
+      localStorage.setItem('rol', this.rol)
+      localStorage.setItem('userId', String(this.userId))
 
-        router.push(this.returnUrl || '/pantallas')
-        this.returnUrl = null
-      } catch (error) {
-        console.error('Error al iniciar sesión:', error)
-        throw error
+      if (this.rol === 'ADMIN') {
+        router.push('/pantallas')
+      } else if (this.rol === 'VENDEDOR') {
+        router.push('/ventas')
+      } else {
+        router.push('/')
       }
     },
     logout() {
       localStorage.clear()
-      this.$reset()
+      this.user = ''
+      this.rol = ''
+      this.userId = 0
+      this.token = null
       router.push('/login')
     },
   },

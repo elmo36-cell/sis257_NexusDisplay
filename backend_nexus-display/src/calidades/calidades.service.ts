@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateCalidadDto } from './dto/create-calidad.dto';
 import { UpdateCalidadDto } from './dto/update-calidad.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -12,12 +16,12 @@ export class CalidadesService {
   ) {}
 
   async create(createCalidadDto: CreateCalidadDto): Promise<Calidad> {
-    const calidadExistente = await this.calidadesRepository.findOneBy({
+    let calidad = await this.calidadesRepository.findOneBy({
       nombre: createCalidadDto.nombre,
     });
-    if (calidadExistente) throw new ConflictException('La calidad ya existe');
+    if (calidad) throw new ConflictException('La calidad ya existe');
 
-    const calidad = new Calidad();
+    calidad = new Calidad();
     Object.assign(calidad, createCalidadDto);
     return this.calidadesRepository.save(calidad);
   }
@@ -37,13 +41,6 @@ export class CalidadesService {
     updateCalidadDto: UpdateCalidadDto,
   ): Promise<Calidad> {
     const calidad = await this.findOne(id);
-    if (updateCalidadDto.nombre && updateCalidadDto.nombre !== calidad.nombre) {
-      const calidadExistente = await this.calidadesRepository.findOneBy({
-        nombre: updateCalidadDto.nombre,
-      });
-      if (calidadExistente)
-        throw new ConflictException('Ya existe otra calidad con ese nombre');
-    }
     Object.assign(calidad, updateCalidadDto);
     return this.calidadesRepository.save(calidad);
   }

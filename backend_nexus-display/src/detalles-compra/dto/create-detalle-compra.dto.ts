@@ -21,14 +21,9 @@ export class CreateDetalleCompraDto {
   readonly cantidad: number;
 
   @ApiProperty({ example: 45.0 })
-  @IsNotEmpty({ message: 'El precio unitario es obligatorio' })
-  @IsNumber({}, { message: 'El precio unitario debe ser un número válido' })
-  @Min(0, { message: 'El precio unitario no puede ser negativo' })
-  readonly precioUnitario: number;
+  @IsNotEmpty({ message: 'El costo unitario es obligatorio' })
+  @IsNumber({}, { message: 'El costo unitario debe ser un número válido' })
+  @Min(0, { message: 'El costo unitario no puede ser negativo' })
+  readonly costoUnitario: number;
 
-  @ApiProperty({ example: 450.0 })
-  @IsNotEmpty({ message: 'El subtotal es obligatorio' })
-  @IsNumber({}, { message: 'El subtotal debe ser un número válido' })
-  @Min(0, { message: 'El subtotal no puede ser negativo' })
-  readonly subtotal: number;
 }

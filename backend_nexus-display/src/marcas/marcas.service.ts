@@ -11,17 +11,15 @@ import { Repository } from 'typeorm';
 
 @Injectable()
 export class MarcasService {
-  constructor(
-    @InjectRepository(Marca) private marcasRepository: Repository<Marca>,
-  ) {}
+  constructor(@InjectRepository(Marca) private marcasRepository: Repository<Marca>) {}
 
   async create(createMarcaDto: CreateMarcaDto): Promise<Marca> {
-    const marcaExistente = await this.marcasRepository.findOneBy({
+    let marca = await this.marcasRepository.findOneBy({
       nombre: createMarcaDto.nombre,
     });
-    if (marcaExistente) throw new ConflictException('La marca ya existe');
+    if (marca) throw new ConflictException('La marca ya existe');
 
-    const marca = new Marca();
+    marca = new Marca();
     Object.assign(marca, createMarcaDto);
     return this.marcasRepository.save(marca);
   }
@@ -38,13 +36,6 @@ export class MarcasService {
 
   async update(id: number, updateMarcaDto: UpdateMarcaDto): Promise<Marca> {
     const marca = await this.findOne(id);
-    if (updateMarcaDto.nombre && updateMarcaDto.nombre !== marca.nombre) {
-      const marcaExistente = await this.marcasRepository.findOneBy({
-        nombre: updateMarcaDto.nombre,
-      });
-      if (marcaExistente)
-        throw new ConflictException('Ya existe otra marca con ese nombre');
-    }
     Object.assign(marca, updateMarcaDto);
     return this.marcasRepository.save(marca);
   }

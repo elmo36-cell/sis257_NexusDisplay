@@ -8,6 +8,6 @@ import { Almacen } from './entities/almacen.entity';
   imports: [TypeOrmModule.forFeature([Almacen])],
   controllers: [AlmacenesController],
   providers: [AlmacenesService],
-  exports: [AlmacenesService],
+  exports: [AlmacenesService, TypeOrmModule],
 })
 export class AlmacenesModule {}

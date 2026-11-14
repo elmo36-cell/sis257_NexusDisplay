@@ -1,36 +1,27 @@
 <script setup lang="ts">
+import { RouterView } from 'vue-router'
 import MainHeader from '@/components/MainHeader.vue'
 import MainFooter from '@/components/MainFooter.vue'
 </script>
 
 <template>
-  <div id="app" class="d-flex flex-column min-vh-0 bg-light">
-    <!-- Barra de Navegación Superior -->
+  <div class="d-flex flex-column min-vh-100 w-100 bg-light text-dark">
     <MainHeader />
-
-    <!-- Contenedor Principal donde se cargan dinámicamente las vistas (Marcas, Roles, Pantallas, etc.) -->
-    <main class="flex-grow-1 pt-5 mt-4">
+    <main class="flex-grow-1 w-100">
       <RouterView />
     </main>
-
-    <!-- Pie de Página -->
     <MainFooter />
   </div>
 </template>
 
 <style>
-/* Estilos globales limpios para asegurar que la app ocupe toda la pantalla correctamente */
 html,
-body {
-  height: 100%;
-  margin: 0;
-  background-color: #588fc7;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
-
+body,
 #app {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background-color: #f8fafc !important;
 }
 </style>

@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateCategoriaDto } from './dto/create-categoria.dto';
 import { UpdateCategoriaDto } from './dto/update-categoria.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -13,13 +17,12 @@ export class CategoriasService {
   ) {}
 
   async create(createCategoriaDto: CreateCategoriaDto): Promise<Categoria> {
-    const categoriaExistente = await this.categoriasRepository.findOneBy({
+    let categoria = await this.categoriasRepository.findOneBy({
       nombre: createCategoriaDto.nombre,
     });
-    if (categoriaExistente)
-      throw new ConflictException('La categoría ya existe');
+    if (categoria) throw new ConflictException('La categoría ya existe');
 
-    const categoria = new Categoria();
+    categoria = new Categoria();
     Object.assign(categoria, createCategoriaDto);
     return this.categoriasRepository.save(categoria);
   }
@@ -39,16 +42,6 @@ export class CategoriasService {
     updateCategoriaDto: UpdateCategoriaDto,
   ): Promise<Categoria> {
     const categoria = await this.findOne(id);
-    if (
-      updateCategoriaDto.nombre &&
-      updateCategoriaDto.nombre !== categoria.nombre
-    ) {
-      const categoriaExistente = await this.categoriasRepository.findOneBy({
-        nombre: updateCategoriaDto.nombre,
-      });
-      if (categoriaExistente)
-        throw new ConflictException('Ya existe otra categoría con ese nombre');
-    }
     Object.assign(categoria, updateCategoriaDto);
     return this.categoriasRepository.save(categoria);
   }

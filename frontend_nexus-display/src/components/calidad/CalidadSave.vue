@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import type { Calidad } from '@/models/calidad'
 import http from '@/plugins/axios'
-import { Button, Dialog, InputText, Textarea } from 'primevue'
+import { Button, Dialog, InputText } from 'primevue'
 import { computed, ref, watch } from 'vue'
 
 const ENDPOINT = 'calidades'
 const props = defineProps({
   mostrar: Boolean,
-  calidad: { type: Object as () => Calidad, default: () => ({}) as Calidad },
+  calidad: {
+    type: Object as () => Calidad,
+    default: () => ({}) as Calidad,
+  },
   modoEdicion: Boolean,
 })
 const emit = defineEmits(['guardar', 'close'])
@@ -42,27 +45,27 @@ async function handleSave() {
     calidad.value = {} as Calidad
     dialogVisible.value = false
   } catch (error: any) {
-    alert(error?.response?.data?.message || 'Error al guardar')
+    alert(error?.response?.data?.message || 'Error al guardar calidad')
   }
 }
 </script>
 
 <template>
-  <div class="card flex justify-center">
-    <Dialog v-model:visible="dialogVisible" :header="props.modoEdicion ? 'Editar Calidad' : 'Crear Calidad'"
-      style="width: 25rem">
-      <div class="flex items-center gap-4 mb-4">
-        <label for="nombre" class="font-semibold w-3">Nombre</label>
-        <InputText id="nombre" v-model="calidad.nombre" class="flex-auto" autocomplete="off" autofocus />
+  <Dialog v-model:visible="dialogVisible" :header="props.modoEdicion ? 'Editar Calidad' : 'Crear Calidad'"
+    style="width: 25rem" modal>
+    <div class="flex flex-column gap-3">
+      <div>
+        <label class="font-semibold block mb-1">Nombre</label>
+        <InputText v-model="calidad.nombre" class="w-full" placeholder="Ej: Original, OLED, Incell" autofocus />
       </div>
-      <div class="flex items-center gap-4 mb-4">
-        <label for="descripcion" class="font-semibold w-3">Descripción</label>
-        <Textarea id="descripcion" v-model="calidad.descripcion" rows="3" class="flex-auto" />
+      <div>
+        <label class="font-semibold block mb-1">Descripción</label>
+        <InputText v-model="calidad.descripcion" class="w-full" />
       </div>
       <div class="flex justify-end gap-2">
         <Button type="button" label="Cancelar" icon="pi pi-times" severity="secondary" @click="dialogVisible = false" />
         <Button type="button" label="Guardar" icon="pi pi-save" @click="handleSave" />
       </div>
-    </Dialog>
-  </div>
+    </div>
+  </Dialog>
 </template>

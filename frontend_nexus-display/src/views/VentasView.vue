@@ -1,35 +1,25 @@
 <script setup lang="ts">
 import VentaList from '@/components/venta/VentaList.vue'
 import VentaSave from '@/components/venta/VentaSave.vue'
+import { useAuthStore } from '@/stores'
 import Button from 'primevue/button'
 import { ref } from 'vue'
 
-const mostrarDialog = ref<boolean>(false)
-const listRef = ref<typeof VentaList | null>(null)
-const itemEdit = ref<any>(null)
-
-function handleCreate() {
-  itemEdit.value = null
-  mostrarDialog.value = true
-}
-function handleEdit(item: any) {
-  itemEdit.value = item
-  mostrarDialog.value = true
-}
-function handleCloseDialog() {
-  mostrarDialog.value = false
-}
-function handleGuardar() {
-  listRef.value?.obtenerLista()
-}
+const authStore = useAuthStore()
+const mostrarDialog = ref(false)
+const ventaListRef = ref<typeof VentaList | null>(null)
 </script>
 
 <template>
-  <div class="container py-5 mt-5">
-    <h2>Ventas</h2>
-    <Button label="Crear Nuevo" icon="pi pi-plus" @click="handleCreate" />
-    <VentaList ref="listRef" @edit="handleEdit" />
-    <VentaSave :mostrar="mostrarDialog" :venta="itemEdit" :modoEdicion="!!itemEdit" @guardar="handleGuardar"
-      @close="handleCloseDialog" />
+  <div class="container mx-auto p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="m-0">
+        {{ authStore.rol === 'CLIENTE' ? 'Mis Compras Realizadas' : 'Gestión de Ventas' }}
+      </h2>
+      <Button v-if="authStore.rol === 'ADMIN' || authStore.rol === 'VENDEDOR'" label="Registrar Venta"
+        @click="mostrarDialog = true" />
+    </div>
+    <VentaList ref="ventaListRef" />
+    <VentaSave :mostrar="mostrarDialog" @guardar="ventaListRef?.obtenerLista()" @close="mostrarDialog = false" />
   </div>
 </template>

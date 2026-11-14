@@ -8,6 +8,6 @@ import { Module } from '@nestjs/common';
   imports: [TypeOrmModule.forFeature([Calidad])],
   controllers: [CalidadesController],
   providers: [CalidadesService],
-  exports: [CalidadesService],
+  exports: [CalidadesService, TypeOrmModule],
 })
 export class CalidadesModule {}

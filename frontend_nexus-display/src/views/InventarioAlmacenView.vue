@@ -1,35 +1,51 @@
 <script setup lang="ts">
-import InventarioAlmacenList from '@/components/inventarioAlmacen/InventarioAlmacenList.vue'
-import InventarioAlmacenSave from '@/components/inventarioAlmacen/InventarioAlmacenSave.vue'
+import InventarioList from '@/components/inventarioAlmacen/InventarioAlmacenList.vue'
+import InventarioSave from '@/components/inventarioAlmacen/InventarioAlmacenSave.vue'
+import type { InventarioAlmacen } from '@/models/inventario-almacen'
+import { useAuthStore } from '@/stores'
 import Button from 'primevue/button'
 import { ref } from 'vue'
 
-const mostrarDialog = ref<boolean>(false)
-const listRef = ref<typeof InventarioAlmacenList | null>(null)
-const itemEdit = ref<any>(null)
+const authStore = useAuthStore()
+const mostrarDialog = ref(false)
+const inventarioListRef = ref<typeof InventarioList | null>(null)
+const inventarioEdit = ref<InventarioAlmacen | undefined>(undefined)
 
 function handleCreate() {
-  itemEdit.value = null
+  inventarioEdit.value = undefined
   mostrarDialog.value = true
 }
-function handleEdit(item: any) {
-  itemEdit.value = item
+
+function handleEdit(inv: InventarioAlmacen) {
+  inventarioEdit.value = { ...inv }
   mostrarDialog.value = true
 }
+
 function handleCloseDialog() {
   mostrarDialog.value = false
 }
+
 function handleGuardar() {
-  listRef.value?.obtenerLista()
+  inventarioListRef.value?.obtenerLista()
 }
 </script>
 
 <template>
-  <div class="container py-5 mt-5">
-    <h2>Inventario por Almacén</h2>
-    <Button label="Crear Nuevo" icon="pi pi-plus" @click="handleCreate" />
-    <InventarioAlmacenList ref="listRef" @edit="handleEdit" />
-    <InventarioAlmacenSave :mostrar="mostrarDialog" :inventario="itemEdit" :modoEdicion="!!itemEdit"
+  <div class="container mx-auto p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h2 class="m-0">Inventario por Almacén</h2>
+        <p class="text-muted small m-0 mt-1">
+          Consulta y asigna la cantidad de pantallas disponibles en cada sucursal.
+        </p>
+      </div>
+      <Button v-if="authStore.rol === 'ADMIN' || authStore.rol === 'VENDEDOR'" type="button" label="Asignar Stock"
+        @click="handleCreate" />
+    </div>
+
+    <InventarioList ref="inventarioListRef" @edit="handleEdit" />
+
+    <InventarioSave :mostrar="mostrarDialog" :inventario="inventarioEdit" :modoEdicion="!!inventarioEdit"
       @guardar="handleGuardar" @close="handleCloseDialog" />
   </div>
 </template>

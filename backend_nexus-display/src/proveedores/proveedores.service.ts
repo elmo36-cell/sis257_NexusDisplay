@@ -7,21 +7,15 @@ import { Repository } from 'typeorm';
 
 @Injectable()
 export class ProveedoresService {
-  constructor(
-    @InjectRepository(Proveedor)
-    private proveedoresRepository: Repository<Proveedor>,
-  ) {}
+  constructor(@InjectRepository(Proveedor) private proveedoresRepository: Repository<Proveedor>) {}
 
   async create(createProveedorDto: CreateProveedorDto): Promise<Proveedor> {
-    const proveedorExistente = await this.proveedoresRepository.findOneBy({
-      email: createProveedorDto.email,
+    let proveedor = await this.proveedoresRepository.findOneBy({
+      nit: createProveedorDto.nit,
     });
-    if (proveedorExistente)
-      throw new ConflictException(
-        'Ya existe un proveedor registrado con ese correo electrónico',
-      );
+    if (proveedor) throw new ConflictException('El proveedor ya existe');
 
-    const proveedor = new Proveedor();
+    proveedor = new Proveedor();
     Object.assign(proveedor, createProveedorDto);
     return this.proveedoresRepository.save(proveedor);
   }
@@ -36,23 +30,8 @@ export class ProveedoresService {
     return proveedor;
   }
 
-  async update(
-    id: number,
-    updateProveedorDto: UpdateProveedorDto,
-  ): Promise<Proveedor> {
+  async update(id: number, updateProveedorDto: UpdateProveedorDto): Promise<Proveedor> {
     const proveedor = await this.findOne(id);
-    if (
-      updateProveedorDto.email &&
-      updateProveedorDto.email !== proveedor.email
-    ) {
-      const emailExistente = await this.proveedoresRepository.findOneBy({
-        email: updateProveedorDto.email,
-      });
-      if (emailExistente)
-        throw new ConflictException(
-          'El correo electrónico ya está en uso por otro proveedor',
-        );
-    }
     Object.assign(proveedor, updateProveedorDto);
     return this.proveedoresRepository.save(proveedor);
   }

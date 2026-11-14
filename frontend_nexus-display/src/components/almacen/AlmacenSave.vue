@@ -7,7 +7,10 @@ import { computed, ref, watch } from 'vue'
 const ENDPOINT = 'almacenes'
 const props = defineProps({
   mostrar: Boolean,
-  almacen: { type: Object as () => Almacen, default: () => ({}) as Almacen },
+  almacen: {
+    type: Object as () => Almacen,
+    default: () => ({}) as Almacen,
+  },
   modoEdicion: Boolean,
 })
 const emit = defineEmits(['guardar', 'close'])
@@ -31,7 +34,8 @@ async function handleSave() {
   try {
     const body = {
       nombre: almacen.value.nombre,
-      ubicacion: almacen.value.ubicacion,
+      direccion: almacen.value.direccion,
+      telefono: almacen.value.telefono,
     }
     if (props.modoEdicion) {
       await http.patch(`${ENDPOINT}/${almacen.value.id}`, body)
@@ -42,27 +46,31 @@ async function handleSave() {
     almacen.value = {} as Almacen
     dialogVisible.value = false
   } catch (error: any) {
-    alert(error?.response?.data?.message || 'Error al guardar')
+    alert(error?.response?.data?.message || 'Error al guardar almacén')
   }
 }
 </script>
 
 <template>
-  <div class="card flex justify-center">
-    <Dialog v-model:visible="dialogVisible" :header="props.modoEdicion ? 'Editar Almacén' : 'Crear Almacén'"
-      style="width: 25rem">
-      <div class="flex items-center gap-4 mb-4">
-        <label for="nombre" class="font-semibold w-3">Nombre</label>
-        <InputText id="nombre" v-model="almacen.nombre" class="flex-auto" autocomplete="off" autofocus />
+  <Dialog v-model:visible="dialogVisible" :header="props.modoEdicion ? 'Editar Almacén' : 'Crear Almacén'"
+    style="width: 25rem" modal>
+    <div class="flex flex-column gap-3">
+      <div>
+        <label class="font-semibold block mb-1">Nombre</label>
+        <InputText v-model="almacen.nombre" class="w-full" autofocus />
       </div>
-      <div class="flex items-center gap-4 mb-4">
-        <label for="ubicacion" class="font-semibold w-3">Ubicación</label>
-        <InputText id="ubicacion" v-model="almacen.ubicacion" class="flex-auto" autocomplete="off" />
+      <div>
+        <label class="font-semibold block mb-1">Dirección</label>
+        <InputText v-model="almacen.direccion" class="w-full" />
+      </div>
+      <div>
+        <label class="font-semibold block mb-1">Teléfono</label>
+        <InputText v-model="almacen.telefono" class="w-full" />
       </div>
       <div class="flex justify-end gap-2">
         <Button type="button" label="Cancelar" icon="pi pi-times" severity="secondary" @click="dialogVisible = false" />
         <Button type="button" label="Guardar" icon="pi pi-save" @click="handleSave" />
       </div>
-    </Dialog>
-  </div>
+    </div>
+  </Dialog>
 </template>

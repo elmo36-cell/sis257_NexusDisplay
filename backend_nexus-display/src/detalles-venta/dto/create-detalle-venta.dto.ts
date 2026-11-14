@@ -1,12 +1,14 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsDecimal, IsInt, IsNotEmpty, IsPositive, Min } from "class-validator";
+import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { IsInt, IsNotEmpty, IsNumber, IsOptional, IsPositive, Min } from 'class-validator';
 
 export class CreateDetalleVentaDto {
-  @ApiProperty({ example: 1 })
-  @IsNotEmpty({ message: 'El ID de la venta es obligatorio' })
+  @ApiProperty({ required: false , example: 1 })
+  @IsOptional()
+  @Type(() => Number)
   @IsInt({ message: 'El ID de la venta debe ser un número entero' })
   @IsPositive({ message: 'El ID de la venta debe ser un número positivo' })
-  readonly idVenta: number;
+  readonly idVenta?: number;
 
   @ApiProperty({ example: 1 })
   @IsNotEmpty({ message: 'El ID de la pantalla es obligatorio' })
@@ -22,20 +24,7 @@ export class CreateDetalleVentaDto {
 
   @ApiProperty({ example: 175.0 })
   @IsNotEmpty({ message: 'El precio unitario es obligatorio' })
-  @IsDecimal(
-    { decimal_digits: '2' },
-    {
-      message:
-        'El precio unitario debe ser un número decimal con hasta 2 decimales',
-    },
-  )
+  @IsNumber({}, { message: 'El precio unitario debe ser de tipo numérico' })
+  @IsPositive({ message: 'El precio unitario debe ser mayor a 0' })
   readonly precioUnitario: number;
-
-  @ApiProperty({ example: 350.0 })
-  @IsNotEmpty({ message: 'El subtotal es obligatorio' })
-  @IsDecimal(
-    { decimal_digits: '2' },
-    { message: 'El subtotal debe ser un número decimal con hasta 2 decimales' },
-  )
-  readonly subtotal: number;
 }

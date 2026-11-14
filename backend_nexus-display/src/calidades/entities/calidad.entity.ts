@@ -17,14 +17,8 @@ export class Calidad {
   @Column('varchar', { length: 50, unique: true })
   nombre: string;
 
-  @Column('varchar', { length: 255 })
+  @Column('varchar', { length: 255, nullable: true })
   descripcion: string;
-
-  @Column('int', { name: 'garantia_meses' })
-  garantiaMeses: number;
-
-  @Column('boolean', { default: true })
-  estado: boolean;
 
   @CreateDateColumn({ name: 'fecha_creacion' })
   fechaCreacion: Date;
@@ -35,6 +29,6 @@ export class Calidad {
   @DeleteDateColumn({ name: 'fecha_eliminacion' })
   fechaEliminacion: Date;
 
-  @OneToMany(() => Pantalla, pantalla => pantalla.calidad)
+  @OneToMany(() => Pantalla, (pantalla) => pantalla.calidad)
   pantallas: Pantalla[];
 }

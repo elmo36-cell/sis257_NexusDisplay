@@ -2,6 +2,7 @@ import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToO
 import { Proveedor } from "../../proveedores/entities/proveedor.entity";
 import { Usuario } from "../../usuarios/entities/usuario.entity";
 import { DetalleCompra } from "../../detalles-compra/entities/detalle-compra.entity";
+import { Almacen } from "../../almacenes/entities/almacen.entity";
 
 @Entity('compras')
 export class Compra {
@@ -15,33 +16,23 @@ export class Compra {
     onDelete: 'RESTRICT',
     onUpdate: 'CASCADE',
   })
-  @JoinColumn({ name: 'id_proveedor' })
-  proveedor: Proveedor;
 
   @Column('int', { name: 'id_usuario' })
   idUsuario: number;
 
-  @ManyToOne(() => Usuario, (usuario) => usuario.compras, {
-    onDelete: 'RESTRICT',
-    onUpdate: 'CASCADE',
+  @Column('integer', { name: 'id_almacen' })
+  idAlmacen: number;
+
+  @CreateDateColumn()
+  fecha: Date;
+
+  @Column('decimal', {
+    precision: 10,
+    scale: 2,
+    default: 0,
+    transformer: { to: (v: number) => v, from: (v: string) => parseFloat(v) },
   })
-  @JoinColumn({ name: 'id_usuario' })
-  usuario: Usuario;
-
-  @CreateDateColumn({ name: 'fecha_compra' })
-  fechaCompra: Date;
-
-  @Column('varchar', { length: 50, name: 'numero_documento' })
-  numeroDocumento: string;
-
-  @Column('decimal', { precision: 12, scale: 2 })
   total: number;
-
-  @Column('varchar', { length: 30, default: 'PENDIENTE' })
-  estado: string;
-
-  @Column('text', { nullable: true })
-  observaciones: string;
 
   @CreateDateColumn({ name: 'fecha_creacion' })
   fechaCreacion: Date;
@@ -52,8 +43,18 @@ export class Compra {
   @DeleteDateColumn({ name: 'fecha_eliminacion' })
   fechaEliminacion: Date;
 
-  @OneToMany(() => DetalleCompra, (detalleCompra) => detalleCompra.compra, {
-    cascade: true,
-  })
-  detallesCompra: DetalleCompra[];
+  @ManyToOne(() => Proveedor, proveedor => proveedor.compras)
+  @JoinColumn({ name: 'id_proveedor', referencedColumnName: 'id' })
+  proveedor: Proveedor;
+
+  @ManyToOne(() => Usuario, usuario => usuario.compras)
+  @JoinColumn({ name: 'id_usuario', referencedColumnName: 'id' })
+  usuario: Usuario;
+
+  @ManyToOne(() => Almacen, almacen => almacen.compras)
+  @JoinColumn({ name: 'id_almacen', referencedColumnName: 'id' })
+  almacen: Almacen;
+
+  @OneToMany(() => DetalleCompra, detalles => detalles.compra)
+  detalles: DetalleCompra[];
 }

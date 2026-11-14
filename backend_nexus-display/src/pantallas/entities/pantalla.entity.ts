@@ -1,69 +1,58 @@
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import { Modelo } from "../../modelos/entities/modelo.entity";
-import { Categoria } from "../../categorias/entities/categoria.entity";
-import { Calidad } from "../../calidades/entities/calidad.entity";
-import { DetalleCompra } from "../../detalles-compra/entities/detalle-compra.entity";
-import { InventarioAlmacen } from "../../inventario-almacen/entities/inventario-almacen.entity";
-import { DetalleVenta } from "../../detalles-venta/entities/detalle-venta.entity";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  DeleteDateColumn,
+} from 'typeorm';
+import { Modelo } from '../../modelos/entities/modelo.entity';
+import { Calidad } from '../../calidades/entities/calidad.entity';
+import { Categoria } from '../../categorias/entities/categoria.entity';
+import { InventarioAlmacen } from '../../inventario-almacen/entities/inventario-almacen.entity';
+import { DetalleCompra } from '../../detalles-compra/entities/detalle-compra.entity';
+import { DetalleVenta } from '../../detalles-venta/entities/detalle-venta.entity';
 
 @Entity('pantallas')
 export class Pantalla {
   @PrimaryGeneratedColumn('identity')
   id: number;
 
-  @Column('int', { name: 'id_modelo' })
+  @Column({ name: 'id_modelo' })
   idModelo: number;
 
-  @ManyToOne(() => Modelo, (modelo) => modelo.pantallas, {
-    onDelete: 'RESTRICT',
-    onUpdate: 'CASCADE',
-  })
-  @JoinColumn({ name: 'id_modelo' })
-  modelo: Modelo;
-
-  @Column('int', { name: 'id_categoria' })
-  idCategoria: number;
-
-  @ManyToOne(() => Categoria, (categoria) => categoria.pantallas, {
-    onDelete: 'RESTRICT',
-    onUpdate: 'CASCADE',
-  })
-  @JoinColumn({ name: 'id_categoria' })
-  categoria: Categoria;
-
-  @Column('int', { name: 'id_calidad' })
+  @Column({ name: 'id_calidad' })
   idCalidad: number;
 
-  @ManyToOne(() => Calidad, (calidad) => calidad.pantallas, {
-    onDelete: 'RESTRICT',
-    onUpdate: 'CASCADE',
-  })
-  @JoinColumn({ name: 'id_calidad' })
-  calidad: Calidad;
+  @Column({ name: 'id_categoria' })
+  idCategoria: number;
 
-  @Column('varchar', { length: 50, unique: true })
-  sku: string;
-
-  @Column('varchar', { length: 120 })
+  @Column({ type: 'varchar', length: 150 })
   nombre: string;
 
-  @Column('varchar', { length: 255 })
-  descripcion: string;
+  @Column({ type: 'varchar', length: 50, unique: true })
+  codigo: string;
 
-  @Column('decimal', { precision: 12, scale: 2, name: 'precio_compra' })
-  precioCompra: number;
+  @Column({ type: 'varchar', length: 40, default: 'Negro' })
+  color: string;
 
-  @Column('decimal', { precision: 12, scale: 2, name: 'precio_minorista' })
-  precioMinorista: number;
+  @Column({ name: 'con_marco', type: 'boolean', default: false })
+  conMarco: boolean;
 
-  @Column('decimal', { precision: 12, scale: 2, name: 'precio_mayorista' })
-  precioMayorista: number;
+  @Column('varchar', { length: 800 })
+  fotografia: string;
 
-  @Column('varchar', { length: 500 })
-  imagen: string;
-
-  @Column('boolean', { default: true })
-  estado: boolean;
+  @Column({
+    name: 'precio_venta',
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    transformer: { to: (v: number) => v, from: (v: string) => parseFloat(v) },
+  })
+  precioVenta: number;
 
   @CreateDateColumn({ name: 'fecha_creacion' })
   fechaCreacion: Date;
@@ -71,18 +60,27 @@ export class Pantalla {
   @UpdateDateColumn({ name: 'fecha_modificacion' })
   fechaModificacion: Date;
 
-  @DeleteDateColumn({ name: 'fecha_eliminacion' })
+  @DeleteDateColumn({ name: 'fecha_eliminacion', select: false })
   fechaEliminacion: Date;
 
-  @OneToMany(() => DetalleCompra, (detalleCompra) => detalleCompra.pantalla)
+  @ManyToOne(() => Modelo, (modelo) => modelo.pantallas)
+  @JoinColumn({ name: 'id_modelo', referencedColumnName: 'id' })
+  modelo: Modelo;
+
+  @ManyToOne(() => Calidad, (calidad) => calidad.pantallas)
+  @JoinColumn({ name: 'id_calidad', referencedColumnName: 'id' })
+  calidad: Calidad;
+
+  @ManyToOne(() => Categoria, (categoria) => categoria.pantallas)
+  @JoinColumn({ name: 'id_categoria', referencedColumnName: 'id' })
+  categoria: Categoria;
+
+  @OneToMany(() => InventarioAlmacen, (inv) => inv.pantalla)
+  inventarios: InventarioAlmacen[];
+
+  @OneToMany(() => DetalleCompra, (dc) => dc.pantalla)
   detallesCompra: DetalleCompra[];
 
-  @OneToMany(
-    () => InventarioAlmacen,
-    (inventarioAlmacen) => inventarioAlmacen.pantalla,
-  )
-  inventariosAlmacen: InventarioAlmacen[];
-
-  @OneToMany(() => DetalleVenta, (detalleVenta) => detalleVenta.pantalla)
+  @OneToMany(() => DetalleVenta, (dv) => dv.pantalla)
   detallesVenta: DetalleVenta[];
 }

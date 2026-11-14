@@ -10,30 +10,25 @@ export class DetalleCompra {
   @Column('int', { name: 'id_compra' })
   idCompra: number;
 
-  @ManyToOne(() => Compra, (compra) => compra.detallesCompra, {
-    onDelete: 'CASCADE',
-    onUpdate: 'CASCADE',
-  })
-  @JoinColumn({ name: 'id_compra' })
-  compra: Compra;
-
   @Column('int', { name: 'id_pantalla' })
   idPantalla: number;
-
-  @ManyToOne(() => Pantalla, (pantalla) => pantalla.detallesCompra, {
-    onDelete: 'RESTRICT',
-    onUpdate: 'CASCADE',
-  })
-  @JoinColumn({ name: 'id_pantalla' })
-  pantalla: Pantalla;
 
   @Column('int')
   cantidad: number;
 
-  @Column('decimal', { precision: 12, scale: 2, name: 'precio_unitario' })
-  precioUnitario: number;
+  @Column('decimal', {
+    name: 'costo_unitario',
+    precision: 10,
+    scale: 2,
+    transformer: { to: (v: number) => v, from: (v: string) => parseFloat(v) },
+  })
+  costoUnitario: number;
 
-  @Column('decimal', { precision: 12, scale: 2 })
+  @Column('decimal', {
+    precision: 10,
+    scale: 2,
+    transformer: { to: (v: number) => v, from: (v: string) => parseFloat(v) },
+  })
   subtotal: number;
 
   @CreateDateColumn({ name: 'fecha_creacion' })
@@ -44,4 +39,12 @@ export class DetalleCompra {
 
   @DeleteDateColumn({ name: 'fecha_eliminacion' })
   fechaEliminacion: Date;
+
+  @ManyToOne(() => Compra, compra => compra.detalles, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'id_compra', referencedColumnName: 'id' })
+  compra: Compra;
+
+  @ManyToOne(() => Pantalla, pantalla => pantalla.detallesCompra)
+  @JoinColumn({ name: 'id_pantalla', referencedColumnName: 'id' })
+  pantalla: Pantalla;
 }

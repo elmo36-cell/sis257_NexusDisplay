@@ -1,10 +1,16 @@
+import type { Almacen } from './almacen'
+import type { DetalleVenta } from './detalle-venta'
 import type { Usuario } from './usuario'
 
 export interface Venta {
   id: number
-  fecha: string
-  cliente: string
-  total: number
   idUsuario: number
-  usuario?: Usuario
+  idAlmacen: number
+  nombreCliente: string
+  documentoCliente: string
+  fecha: string
+  total: number
+  usuario: Usuario
+  almacen: Almacen
+  detalles: DetalleVenta[]
 }

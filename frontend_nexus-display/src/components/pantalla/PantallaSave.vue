@@ -1,23 +1,26 @@
 <script setup lang="ts">
+import type { Pantalla } from '@/models/pantalla'
+import type { Modelo } from '@/models/modelo'
 import type { Calidad } from '@/models/calidad'
 import type { Categoria } from '@/models/categoria'
-import type { Modelo } from '@/models/modelo'
-import type { Pantalla } from '@/models/pantalla'
 import http from '@/plugins/axios'
-import { Button, Dialog, InputNumber, InputText, Select, Textarea } from 'primevue'
+import { Button, Dialog, InputText, InputNumber, Select, Checkbox } from 'primevue'
 import { computed, ref, watch } from 'vue'
 
 const ENDPOINT = 'pantallas'
 const props = defineProps({
   mostrar: Boolean,
-  pantalla: { type: Object as () => Pantalla, default: () => ({}) as Pantalla },
+  pantalla: {
+    type: Object as () => Pantalla,
+    default: () => ({}) as Pantalla,
+  },
   modoEdicion: Boolean,
 })
 const emit = defineEmits(['guardar', 'close'])
 
 const modelos = ref<Modelo[]>([])
-const categorias = ref<Categoria[]>([])
 const calidades = ref<Calidad[]>([])
+const categorias = ref<Categoria[]>([])
 
 const dialogVisible = computed({
   get: () => props.mostrar,
@@ -28,26 +31,26 @@ const dialogVisible = computed({
 
 const pantalla = ref<Pantalla>({ ...props.pantalla })
 
-async function cargarRelaciones() {
-  modelos.value = await http.get('modelos').then((r) => r.data)
-  categorias.value = await http.get('categorias').then((r) => r.data)
-  calidades.value = await http.get('calidades').then((r) => r.data)
+async function obtenerRelaciones() {
+  const [resModelos, resCalidades, resCategorias] = await Promise.all([
+    http.get('modelos'),
+    http.get('calidades'),
+    http.get('categorias'),
+  ])
+  modelos.value = resModelos.data
+  calidades.value = resCalidades.data
+  categorias.value = resCategorias.data
 }
 
 watch(
   () => props.mostrar,
-  (nuevoValor) => {
-    if (nuevoValor) {
-      cargarRelaciones()
-      if (props.pantalla?.id) {
-        pantalla.value = {
-          ...props.pantalla,
-          idModelo: props.pantalla.idModelo || props.pantalla.modelo?.id || 0,
-          idCategoria: props.pantalla.idCategoria || props.pantalla.categoria?.id || 0,
-          idCalidad: props.pantalla.idCalidad || props.pantalla.calidad?.id || 0,
-        }
-      } else {
-        pantalla.value = { precio: 0 } as Pantalla
+  (newVal) => {
+    if (newVal) {
+      obtenerRelaciones()
+      pantalla.value = {
+        ...props.pantalla,
+        color: props.pantalla?.color || 'Negro',
+        conMarco: props.pantalla?.conMarco ?? false,
       }
     }
   },
@@ -56,12 +59,15 @@ watch(
 async function handleSave() {
   try {
     const body = {
-      nombre: pantalla.value.nombre,
-      descripcion: pantalla.value.descripcion,
-      precio: Number(pantalla.value.precio),
       idModelo: pantalla.value.idModelo,
-      idCategoria: pantalla.value.idCategoria,
       idCalidad: pantalla.value.idCalidad,
+      idCategoria: pantalla.value.idCategoria,
+      nombre: pantalla.value.nombre,
+      codigo: pantalla.value.codigo,
+      color: pantalla.value.color,
+      conMarco: Boolean(pantalla.value.conMarco),
+      fotografia: pantalla.value.fotografia,
+      precioVenta: Number(pantalla.value.precioVenta),
     }
     if (props.modoEdicion) {
       await http.patch(`${ENDPOINT}/${pantalla.value.id}`, body)
@@ -72,46 +78,70 @@ async function handleSave() {
     pantalla.value = {} as Pantalla
     dialogVisible.value = false
   } catch (error: any) {
-    alert(error?.response?.data?.message || 'Error al guardar')
+    alert(error?.response?.data?.message || 'Error al guardar la pantalla')
   }
 }
 </script>
 
 <template>
-  <div class="card flex justify-center">
-    <Dialog v-model:visible="dialogVisible" :header="props.modoEdicion ? 'Editar Pantalla' : 'Crear Pantalla'"
-      style="width: 30rem">
-      <div class="flex items-center gap-4 mb-4">
-        <label for="nombre" class="font-semibold w-3">Nombre</label>
-        <InputText id="nombre" v-model="pantalla.nombre" class="flex-auto" autocomplete="off" autofocus />
+  <Dialog v-model:visible="dialogVisible" :header="props.modoEdicion ? 'Editar Pantalla' : 'Crear Pantalla'"
+    style="width: 30rem" modal>
+    <div class="flex flex-column gap-3">
+      <div>
+        <label class="font-semibold block mb-1">Modelo de Dispositivo</label>
+        <Select v-model="pantalla.idModelo" :options="modelos" optionLabel="nombre" optionValue="id"
+          placeholder="Seleccione un modelo" class="w-full" />
       </div>
-      <div class="flex items-center gap-4 mb-4">
-        <label for="modelo" class="font-semibold w-3">Modelo</label>
-        <Select id="modelo" v-model="pantalla.idModelo" :options="modelos" optionLabel="nombre" optionValue="id"
-          class="flex-auto" />
+
+      <div class="grid">
+        <div class="col-6">
+          <label class="font-semibold block mb-1">Calidad</label>
+          <Select v-model="pantalla.idCalidad" :options="calidades" optionLabel="nombre" optionValue="id"
+            placeholder="Seleccione calidad" class="w-full" />
+        </div>
+        <div class="col-6">
+          <label class="font-semibold block mb-1">Categoría</label>
+          <Select v-model="pantalla.idCategoria" :options="categorias" optionLabel="nombre" optionValue="id"
+            placeholder="Seleccione categoría" class="w-full" />
+        </div>
       </div>
-      <div class="flex items-center gap-4 mb-4">
-        <label for="categoria" class="font-semibold w-3">Categoría</label>
-        <Select id="categoria" v-model="pantalla.idCategoria" :options="categorias" optionLabel="nombre"
-          optionValue="id" class="flex-auto" />
+
+      <div>
+        <label class="font-semibold block mb-1">Nombre de la Pantalla</label>
+        <InputText v-model="pantalla.nombre" class="w-full" autocomplete="off" />
       </div>
-      <div class="flex items-center gap-4 mb-4">
-        <label for="calidad" class="font-semibold w-3">Calidad</label>
-        <Select id="calidad" v-model="pantalla.idCalidad" :options="calidades" optionLabel="nombre" optionValue="id"
-          class="flex-auto" />
+
+      <div class="grid">
+        <div class="col-6">
+          <label class="font-semibold block mb-1">Código SKU</label>
+          <InputText v-model="pantalla.codigo" class="w-full" autocomplete="off" />
+        </div>
+        <div class="col-6">
+          <label class="font-semibold block mb-1">Precio Venta (Bs.)</label>
+          <InputNumber v-model="pantalla.precioVenta" mode="decimal" :minFractionDigits="2" class="w-full" />
+        </div>
       </div>
-      <div class="flex items-center gap-4 mb-4">
-        <label for="precio" class="font-semibold w-3">Precio (Bs)</label>
-        <InputNumber id="precio" v-model="pantalla.precio" mode="decimal" :minFractionDigits="2" class="flex-auto" />
+
+      <div class="grid align-items-center">
+        <div class="col-6">
+          <label class="font-semibold block mb-1">Color</label>
+          <InputText v-model="pantalla.color" class="w-full" autocomplete="off" />
+        </div>
+        <div class="col-6 flex align-items-center gap-2 mt-4">
+          <Checkbox v-model="pantalla.conMarco" :binary="true" inputId="conMarcoCheck" />
+          <label for="conMarcoCheck" class="font-semibold">Con Marco</label>
+        </div>
       </div>
-      <div class="flex items-center gap-4 mb-4">
-        <label for="descripcion" class="font-semibold w-3">Descripción</label>
-        <Textarea id="descripcion" v-model="pantalla.descripcion" rows="2" class="flex-auto" />
+
+      <div>
+        <label class="font-semibold block mb-1">URL Fotografía</label>
+        <InputText v-model="pantalla.fotografia" class="w-full" autocomplete="off" />
       </div>
+
       <div class="flex justify-end gap-2">
         <Button type="button" label="Cancelar" icon="pi pi-times" severity="secondary" @click="dialogVisible = false" />
         <Button type="button" label="Guardar" icon="pi pi-save" @click="handleSave" />
       </div>
-    </Dialog>
-  </div>
+    </div>
+  </Dialog>
 </template>

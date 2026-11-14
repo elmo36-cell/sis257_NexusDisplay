@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateAlmacenDto } from './dto/create-almacen.dto';
 import { UpdateAlmacenDto } from './dto/update-almacen.dto';
 import { Almacen } from './entities/almacen.entity';
@@ -8,21 +8,26 @@ import { InjectRepository } from '@nestjs/typeorm';
 @Injectable()
 export class AlmacenesService {
   constructor(
-    @InjectRepository(Almacen) private almacenRepository: Repository<Almacen>,
+    @InjectRepository(Almacen) private almacenesRepository: Repository<Almacen>,
   ) {}
 
   async create(createAlmacenDto: CreateAlmacenDto): Promise<Almacen> {
-    const almacen = new Almacen();
+    let almacen = await this.almacenesRepository.findOneBy({
+      nombre: createAlmacenDto.nombre,
+    });
+    if (almacen) throw new ConflictException('El almacén ya existe');
+
+    almacen = new Almacen();
     Object.assign(almacen, createAlmacenDto);
-    return this.almacenRepository.save(almacen);
+    return this.almacenesRepository.save(almacen);
   }
 
   async findAll(): Promise<Almacen[]> {
-    return this.almacenRepository.find();
+    return this.almacenesRepository.find();
   }
 
   async findOne(id: number): Promise<Almacen> {
-    const almacen = await this.almacenRepository.findOne({ where: { id } });
+    const almacen = await this.almacenesRepository.findOneBy({ id });
     if (!almacen) throw new NotFoundException('El almacén no existe');
     return almacen;
   }
@@ -33,11 +38,11 @@ export class AlmacenesService {
   ): Promise<Almacen> {
     const almacen = await this.findOne(id);
     Object.assign(almacen, updateAlmacenDto);
-    return this.almacenRepository.save(almacen);
+    return this.almacenesRepository.save(almacen);
   }
 
   async remove(id: number): Promise<Almacen> {
     const almacen = await this.findOne(id);
-    return this.almacenRepository.softRemove(almacen);
+    return this.almacenesRepository.softRemove(almacen);
   }
 }

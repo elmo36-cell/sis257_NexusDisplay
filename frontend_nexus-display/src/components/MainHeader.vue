@@ -1,127 +1,165 @@
 <script setup lang="ts">
-import { useAuthStore } from '@/stores';
-import { ref } from 'vue';
-import { RouterLink, useRouter } from 'vue-router';
+import { computed, ref, watch } from 'vue'
+import { useAuthStore } from '@/stores'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { Select } from 'primevue'
 
-const router = useRouter();
-const authStore = useAuthStore();
+const authStore = useAuthStore()
+const router = useRouter()
+const route = useRoute()
 
-const menuOpen = ref(false);
+const rutaSeleccionada = ref<string>(route.path)
 
-function cerrarMenu() {
-  menuOpen.value = false;
-}
+watch(
+  () => route.path,
+  (nuevaRuta) => {
+    rutaSeleccionada.value = nuevaRuta
+  },
+)
 
-function manejarSesion() {
-  menuOpen.value = false;
-  if (authStore.token) {
-    authStore.logout();
-    router.push('/login');
-  } else {
-    router.push('/login');
+const modulosPorJerarquia = computed(() => {
+  if (authStore.rol === 'ADMIN') {
+    return [
+      { label: 'Pantallas', value: '/pantallas' },
+      { label: 'Inventario por Almacén', value: '/inventario' },
+      { label: 'Almacenes y Direcciones', value: '/almacenes' },
+      { label: 'Categorías de Repuestos', value: '/categorias' },
+      { label: 'Calidades', value: '/calidades' },
+      { label: 'Marcas', value: '/marcas' },
+      { label: 'Modelos', value: '/modelos' },
+      { label: 'Ventas', value: '/ventas' },
+      { label: 'Detalles de Venta', value: '/detalles-venta' },
+      { label: 'Compras a Proveedores', value: '/compras' },
+      { label: 'Detalles de Compra', value: '/detalles-compra' },
+      { label: 'Proveedores', value: '/proveedores' },
+      { label: 'Usuarios y Roles', value: '/usuarios' },
+    ]
+  }
+
+  if (authStore.rol === 'VENDEDOR') {
+    return [
+      { label: 'Ventas', value: '/ventas' },
+      { label: 'Detalles de Venta', value: '/detalles-venta' },
+      { label: 'Inventario por Almacén', value: '/inventario' },
+      { label: 'Direcciones de Almacenes', value: '/almacenes' },
+      { label: 'Categorías de Repuestos', value: '/categorias' },
+      { label: 'Añadir / Ver Clientes', value: '/usuarios' },
+    ]
+  }
+
+  return []
+})
+
+function irAModulo(ruta: string) {
+  if (ruta) {
+    router.push(ruta)
   }
 }
 </script>
 
 <template>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow">
-    <div class="container-fluid px-4">
-      <RouterLink to="/pantallas" class="navbar-brand fw-bold d-flex align-items-center gap-2" @click="cerrarMenu">
-        <i class="fa fa-cube text-success"></i> Omnicell
+  <nav class="navbar navbar-expand-lg navbar-dark shadow-sm sticky-top px-3 py-2"
+    style="background-color: #0f172a !important; border-bottom: 3px solid #06b6d4">
+    <div class="container-fluid">
+      <RouterLink to="/" class="navbar-brand fw-bold">
+        <span class="text-info">NEXUS</span> DISPLAY
       </RouterLink>
 
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown"
-        aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation"
-        @click="menuOpen = !menuOpen">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNexus">
         <span class="navbar-toggler-icon"></span>
       </button>
 
-      <div class="collapse navbar-collapse" :class="{ show: menuOpen }" id="navbarNavDropdown">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-
-          <!-- Catálogo -->
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Catálogo</a>
-            <ul class="dropdown-menu dropdown-menu-dark shadow">
-              <li>
-                <RouterLink to="/pantallas" class="dropdown-item" @click="cerrarMenu">Pantallas</RouterLink>
-              </li>
-              <li>
-                <RouterLink to="/marcas" class="dropdown-item" @click="cerrarMenu">Marcas</RouterLink>
-              </li>
-              <li>
-                <RouterLink to="/modelos" class="dropdown-item" @click="cerrarMenu">Modelos</RouterLink>
-              </li>
-              <li>
-                <RouterLink to="/categorias" class="dropdown-item" @click="cerrarMenu">Categorías</RouterLink>
-              </li>
-              <li>
-                <RouterLink to="/calidades" class="dropdown-item" @click="cerrarMenu">Calidades</RouterLink>
-              </li>
-            </ul>
-          </li>
-
-          <!-- Logística -->
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Logística</a>
-            <ul class="dropdown-menu dropdown-menu-dark shadow">
-              <li>
-                <RouterLink to="/almacenes" class="dropdown-item" @click="cerrarMenu">Almacenes</RouterLink>
-              </li>
-              <li>
-                <RouterLink to="/inventario-almacen" class="dropdown-item" @click="cerrarMenu">Inv. Almacén</RouterLink>
-              </li>
-              <li>
-                <RouterLink to="/proveedores" class="dropdown-item" @click="cerrarMenu">Proveedores</RouterLink>
-              </li>
-            </ul>
-          </li>
-
-          <!-- Operaciones -->
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Operaciones</a>
-            <ul class="dropdown-menu dropdown-menu-dark shadow">
-              <li>
-                <RouterLink to="/compras" class="dropdown-item" @click="cerrarMenu">Compras</RouterLink>
-              </li>
-              <li>
-                <RouterLink to="/detalles-compra" class="dropdown-item" @click="cerrarMenu">Detalles de Compra
-                </RouterLink>
-              </li>
-              <li>
-                <RouterLink to="/ventas" class="dropdown-item" @click="cerrarMenu">Ventas</RouterLink>
-              </li>
-              <li>
-                <RouterLink to="/detalles-venta" class="dropdown-item" @click="cerrarMenu">Detalles de Venta
-                </RouterLink>
-              </li>
-            </ul>
-          </li>
-
-          <!-- Administración -->
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Administración</a>
-            <ul class="dropdown-menu dropdown-menu-dark shadow">
-              <li>
-                <RouterLink to="/usuarios" class="dropdown-item" @click="cerrarMenu">Usuarios</RouterLink>
-              </li>
-              <li>
-                <RouterLink to="/roles" class="dropdown-item" @click="cerrarMenu">Roles</RouterLink>
-              </li>
-            </ul>
-          </li>
-
-        </ul>
-
-        <!-- Botón de Sesión -->
-        <ul class="navbar-nav ms-auto">
+      <div class="collapse navbar-collapse" id="navbarNexus">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0 align-items-lg-center gap-2">
+          <!-- Visible para todos -->
           <li class="nav-item">
-            <button class="btn btn-outline-light btn-sm px-3 rounded-pill" @click.prevent="manejarSesion">
-              <i class="fa fa-power-off me-1"></i> {{ authStore.token ? 'Cerrar Sesión' : 'Iniciar Sesión' }}
-            </button>
+            <RouterLink to="/" class="nav-link text-white fw-semibold">
+              Catálogo Web
+            </RouterLink>
+          </li>
+
+          <!-- Para Visitante o CLIENTE: Enlace directo al Contacto del Vendedor -->
+          <li v-if="!authStore.token || authStore.rol === 'CLIENTE'" class="nav-item">
+            <a href="/#contacto-vendedores" class="nav-link text-white">
+              Contacto Vendedor
+            </a>
+          </li>
+
+          <!-- Para CLIENTE logueado: Solo ve sus propias compras (no puede añadir clientes) -->
+          <li v-if="authStore.token && authStore.rol === 'CLIENTE'" class="nav-item">
+            <RouterLink to="/ventas" class="nav-link text-white">
+              Mis Compras
+            </RouterLink>
+          </li>
+
+          <!-- Para VENDEDOR y ADMIN -->
+          <template v-if="authStore.token && (authStore.rol === 'ADMIN' || authStore.rol === 'VENDEDOR')">
+            <li class="nav-item">
+              <RouterLink to="/ventas" class="nav-link text-white">
+                Ventas
+              </RouterLink>
+            </li>
+            <li class="nav-item">
+              <RouterLink to="/inventario" class="nav-link text-white">
+                Inventario
+              </RouterLink>
+            </li>
+            <li class="nav-item">
+              <RouterLink to="/almacenes" class="nav-link text-white">
+                Almacenes
+              </RouterLink>
+            </li>
+            <li class="nav-item">
+              <RouterLink to="/categorias" class="nav-link text-white">
+                Categorías
+              </RouterLink>
+            </li>
+            <li class="nav-item">
+              <RouterLink to="/usuarios" class="nav-link text-info fw-semibold">
+                {{ authStore.rol === 'VENDEDOR' ? 'Añadir Clientes' : 'Usuarios' }}
+              </RouterLink>
+            </li>
+          </template>
+
+          <!-- Exclusivo para ADMIN -->
+          <template v-if="authStore.token && authStore.rol === 'ADMIN'">
+            <li class="nav-item">
+              <RouterLink to="/pantallas" class="nav-link text-white">
+                Pantallas
+              </RouterLink>
+            </li>
+            <li class="nav-item">
+              <RouterLink to="/compras" class="nav-link text-white">
+                Compras
+              </RouterLink>
+            </li>
+          </template>
+
+          <!-- SELECT DE NAVEGACIÓN PARA VENDEDOR Y ADMIN -->
+          <li v-if="authStore.token && modulosPorJerarquia.length > 0" class="nav-item ms-lg-2">
+            <Select v-model="rutaSeleccionada" :options="modulosPorJerarquia" optionLabel="label" optionValue="value"
+              :placeholder="`Módulos (${authStore.rol})`" class="w-15rem" @update:modelValue="irAModulo" />
           </li>
         </ul>
 
+        <!-- Sesión activa -->
+        <div class="d-flex align-items-center gap-2">
+          <template v-if="authStore.token">
+            <span class="badge py-2 px-3 fw-bold" :class="{
+              'bg-primary text-white': authStore.rol === 'ADMIN',
+              'bg-success text-white': authStore.rol === 'VENDEDOR',
+              'bg-info text-dark': authStore.rol === 'CLIENTE',
+            }">
+              {{ authStore.user }} ({{ authStore.rol }})
+            </span>
+            <button @click="authStore.logout()" class="btn btn-danger btn-sm">
+              Salir
+            </button>
+          </template>
+          <RouterLink v-else to="/login" class="btn btn-info btn-sm fw-bold text-dark">
+            Iniciar Sesión
+          </RouterLink>
+        </div>
       </div>
     </div>
   </nav>

@@ -1,6 +1,15 @@
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import { Venta } from "../../ventas/entities/venta.entity";
-import { Pantalla } from "../../pantallas/entities/pantalla.entity";
+import {
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { Venta } from '../../ventas/entities/venta.entity';
+import { Pantalla } from '../../pantallas/entities/pantalla.entity';
 
 @Entity('detalle_venta')
 export class DetalleVenta {
@@ -10,30 +19,22 @@ export class DetalleVenta {
   @Column('int', { name: 'id_venta' })
   idVenta: number;
 
-  @ManyToOne(() => Venta, (venta) => venta.detallesVenta, {
-    onDelete: 'RESTRICT',
-    onUpdate: 'CASCADE',
-  })
-  @JoinColumn({ name: 'id_venta' })
-  venta: Venta;
-
   @Column('int', { name: 'id_pantalla' })
   idPantalla: number;
 
-  @ManyToOne(() => Pantalla, (pantalla) => pantalla.detallesVenta, {
-    onDelete: 'RESTRICT',
-    onUpdate: 'CASCADE',
+  @Column('decimal', {
+    name: 'precio_unitario',
+    precision: 10,
+    scale: 2,
+    transformer: { to: (v: number) => v, from: (v: string) => parseFloat(v) },
   })
-  @JoinColumn({ name: 'id_pantalla' })
-  pantalla: Pantalla;
-
-  @Column('int')
-  cantidad: number;
-
-  @Column('decimal', { precision: 12, scale: 2, name: 'precio_unitario' })
   precioUnitario: number;
 
-  @Column('decimal', { precision: 12, scale: 2 })
+  @Column('decimal', {
+    precision: 10,
+    scale: 2,
+    transformer: { to: (v: number) => v, from: (v: string) => parseFloat(v) },
+  })
   subtotal: number;
 
   @CreateDateColumn({ name: 'fecha_creacion' })
@@ -44,4 +45,13 @@ export class DetalleVenta {
 
   @DeleteDateColumn({ name: 'fecha_eliminacion' })
   fechaEliminacion: Date;
+
+  @ManyToOne(() => Venta, (venta) => venta.detalles, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'id_venta', referencedColumnName: 'id' })
+  venta: Venta;
+
+  @ManyToOne(() => Pantalla, (pantalla) => pantalla.detallesVenta)
+  @JoinColumn({ name: 'id_pantalla', referencedColumnName: 'id' })
+  pantalla: Pantalla;
+  cantidad: number;
 }

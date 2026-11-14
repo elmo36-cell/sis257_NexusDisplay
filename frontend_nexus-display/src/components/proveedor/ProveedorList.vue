@@ -15,7 +15,7 @@ const proveedoresFiltrados = computed(() => {
   return proveedores.value.filter(
     (p) =>
       p.nombre.toLowerCase().includes(busqueda.value.toLowerCase()) ||
-      p.telefono?.toLowerCase().includes(busqueda.value.toLowerCase()),
+      p.nit.toLowerCase().includes(busqueda.value.toLowerCase()),
   )
 })
 
@@ -49,39 +49,40 @@ defineExpose({ obtenerLista })
     <div class="col-7 pl-0 mt-3 mb-3">
       <InputGroup>
         <InputGroupAddon><i class="pi pi-search"></i></InputGroupAddon>
-        <InputText v-model="busqueda" type="text" placeholder="Buscar proveedor" />
+        <InputText v-model="busqueda" type="text" placeholder="Buscar proveedor por nombre o NIT" />
       </InputGroup>
     </div>
 
-    <table class="table table-bordered table-striped">
+    <table class="w-full border-collapse">
       <thead>
-        <tr>
-          <th>Nro.</th>
-          <th>Nombre</th>
-          <th>Teléfono</th>
-          <th>Dirección</th>
-          <th>Correo</th>
-          <th>Acciones</th>
+        <tr class="surface-200 text-left">
+          <th class="p-2">Nro.</th>
+          <th class="p-2">Nombre / Empresa</th>
+          <th class="p-2">NIT</th>
+          <th class="p-2">Teléfono</th>
+          <th class="p-2">Dirección</th>
+          <th class="p-2">Acciones</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(p, index) in proveedoresFiltrados" :key="p.id">
-          <td>{{ index + 1 }}</td>
-          <td>{{ p.nombre }}</td>
-          <td>{{ p.telefono }}</td>
-          <td>{{ p.direccion }}</td>
-          <td>{{ p.correo }}</td>
-          <td>
-            <Button icon="pi pi-pencil" aria-label="Editar" text @click="emitirEdicion(p)" />
+        <tr v-for="(proveedor, index) in proveedoresFiltrados" :key="proveedor.id"
+          class="border-bottom-1 surface-border">
+          <td class="p-2">{{ index + 1 }}</td>
+          <td class="p-2 font-semibold">{{ proveedor.nombre }}</td>
+          <td class="p-2">{{ proveedor.nit }}</td>
+          <td class="p-2">{{ proveedor.telefono }}</td>
+          <td class="p-2">{{ proveedor.direccion }}</td>
+          <td class="p-2">
+            <Button icon="pi pi-pencil" aria-label="Editar" text @click="emitirEdicion(proveedor)" />
             <Button icon="pi pi-trash" aria-label="Eliminar" text severity="danger"
-              @click="mostrarEliminarConfirm(p)" />
+              @click="mostrarEliminarConfirm(proveedor)" />
           </td>
         </tr>
       </tbody>
     </table>
 
     <Dialog v-model:visible="mostrarConfirmDialog" header="Confirmar Eliminación" :style="{ width: '25rem' }">
-      <p>¿Estás seguro de que deseas eliminar al proveedor <b>{{ proveedorDelete?.nombre }}</b>?</p>
+      <p>¿Estás seguro de eliminar al proveedor <strong>{{ proveedorDelete?.nombre }}</strong>?</p>
       <div class="flex justify-end gap-2">
         <Button type="button" label="Cancelar" severity="secondary" @click="mostrarConfirmDialog = false" />
         <Button type="button" label="Eliminar" severity="danger" @click="eliminar" />

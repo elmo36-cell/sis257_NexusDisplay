@@ -14,15 +14,9 @@ export class CreateInventarioAlmacenDto {
   @IsPositive({ message: 'El ID del almacén debe ser un número positivo' })
   readonly idAlmacen: number;
 
-  @ApiProperty({ example: 25 })
-  @IsNotEmpty({ message: 'El stock actual es obligatorio' })
-  @IsInt({ message: 'El stock actual debe ser un número entero' })
-  @Min(0, { message: 'El stock actual no puede ser un número negativo' })
-  readonly stockActual: number;
-
-  @ApiProperty({ example: 5 })
-  @IsNotEmpty({ message: 'El stock mínimo es obligatorio' })
-  @IsInt({ message: 'El stock mínimo debe ser un número entero' })
-  @Min(0, { message: 'El stock mínimo no puede ser un número negativo' })
-  readonly stockMinimo: number;
+  @ApiProperty({example: 10})
+  @IsNotEmpty({ message: 'La cantidad es obligatoria' })
+  @IsInt({ message: 'La cantidad debe ser de tipo numérico' })
+  @Min(0, { message: 'La cantidad no puede ser menor a 0' })
+  readonly cantidad: number;
 }

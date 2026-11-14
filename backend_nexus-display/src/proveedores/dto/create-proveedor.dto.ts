@@ -1,6 +1,6 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { Transform } from "class-transformer";
-import { IsBoolean, IsEmail, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from "class-validator";
+import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
+import { IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class CreateProveedorDto {
   @ApiProperty({ example: 'Importadora Global Displays S.R.L.' })
@@ -15,18 +15,16 @@ export class CreateProveedorDto {
   @Transform(({ value }): string | undefined =>
     typeof value === 'string' ? value.trim() : value,
   )
-  readonly nombreEmpresa: string;
+  readonly nombre: string;
 
-  @ApiProperty({ example: 'Carlos Mendoza' })
-  @IsNotEmpty({ message: 'El nombre del contacto es obligatorio' })
-  @IsString({ message: 'El contacto debe ser de tipo cadena' })
-  @MaxLength(100, {
-    message: 'El contacto no puede tener más de 100 caracteres',
-  })
+  @ApiProperty({ example: '123456789' })
+  @IsNotEmpty({ message: 'El NIT es obligatorio' })
+  @IsString({ message: 'El NIT debe ser de tipo cadena' })
+  @MaxLength(25, { message: 'El NIT no puede tener más de 25 caracteres' })
   @Transform(({ value }): string | undefined =>
-    typeof value === 'string' ? value.trim() : value,
+    typeof value == 'string' ? value.trim() : value,
   )
-  readonly contacto: string;
+  readonly nit: string;
 
   @ApiProperty({ example: '+59170123456' })
   @IsNotEmpty({ message: 'El teléfono es obligatorio' })
@@ -35,41 +33,13 @@ export class CreateProveedorDto {
   @Transform(({ value }): string | undefined =>
     typeof value === 'string' ? value.trim() : value,
   )
-  readonly telefono: string;
-
-  @ApiProperty({ example: 'ventas@globaldisplays.com' })
-  @IsNotEmpty({ message: 'El correo electrónico es obligatorio' })
-  @IsEmail({}, { message: 'El formato del correo electrónico no es válido' })
-  @MaxLength(100, { message: 'El correo no puede tener más de 100 caracteres' })
-  @Transform(({ value }): string | undefined =>
-    typeof value === 'string' ? value.toLowerCase().trim() : value,
-  )
-  readonly email: string;
+  readonly telefono?: string;
 
   @ApiProperty({ example: 'Av. Principal #456, Zona Industrial' })
   @IsNotEmpty({ message: 'La dirección es obligatoria' })
   @IsString({ message: 'La dirección debe ser de tipo cadena' })
-  @MaxLength(200, {
-    message: 'La dirección no puede tener más de 200 caracteres',
-  })
   @Transform(({ value }): string | undefined =>
-    typeof value === 'string' ? value.trim() : value,
+    typeof value == 'string' ? value.trim() : value,
   )
   readonly direccion: string;
-
-  @ApiProperty({ example: 'China' })
-  @IsNotEmpty({ message: 'El país de origen es obligatorio' })
-  @IsString({ message: 'El país de origen debe ser de tipo cadena' })
-  @MaxLength(50, {
-    message: 'El país de origen no puede tener más de 50 caracteres',
-  })
-  @Transform(({ value }): string | undefined =>
-    typeof value === 'string' ? value.trim() : value,
-  )
-  readonly paisOrigen: string;
-
-  @ApiProperty({ example: true, required: false })
-  @IsOptional()
-  @IsBoolean({ message: 'El estado debe ser de tipo booleano' })
-  readonly estado?: boolean;
 }

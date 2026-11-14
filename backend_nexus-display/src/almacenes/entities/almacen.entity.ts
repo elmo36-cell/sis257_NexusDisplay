@@ -1,5 +1,15 @@
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import { InventarioAlmacen } from "../../inventario-almacen/entities/inventario-almacen.entity";
+import {
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { InventarioAlmacen } from '../../inventario-almacen/entities/inventario-almacen.entity';
+import { Venta } from '../../ventas/entities/venta.entity';
+import { Compra } from '../../compras/entities/compra.entity';
 
 @Entity('almacenes')
 export class Almacen {
@@ -10,13 +20,10 @@ export class Almacen {
   nombre: string;
 
   @Column('varchar', { length: 200 })
-  ubicacion: string;
+  direccion: string;
 
-  @Column('varchar', { length: 255, nullable: true })
-  descripcion: string;
-
-  @Column('boolean', { default: true })
-  estado: boolean;
+  @Column('varchar', { length: 30, nullable: true })
+  telefono: string;
 
   @CreateDateColumn({ name: 'fecha_creacion' })
   fechaCreacion: Date;
@@ -27,9 +34,12 @@ export class Almacen {
   @DeleteDateColumn({ name: 'fecha_eliminacion' })
   fechaEliminacion: Date;
 
-  @OneToMany(
-    () => InventarioAlmacen,
-    (inventarioAlmacen) => inventarioAlmacen.almacen,
-  )
-  inventarioAlmacenes: InventarioAlmacen[];
+  @OneToMany(() => InventarioAlmacen, inventarios => inventarios.almacen)
+  inventarios: InventarioAlmacen[];
+
+  @OneToMany(() => Venta, ventas => ventas.almacen)
+  ventas: Venta[];
+
+  @OneToMany(() => Compra, compras => compras.almacen)
+  compras: Compra[];
 }

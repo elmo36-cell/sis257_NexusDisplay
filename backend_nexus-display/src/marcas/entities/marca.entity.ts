@@ -17,11 +17,11 @@ export class Marca {
   @Column('varchar', { length: 50, unique: true })
   nombre: string;
 
-  @Column('varchar', { length: 255 })
-  descripcion: string;
-
-  @Column('boolean', { default: true })
-  estado: boolean;
+  @Column('varchar', {
+    length: 800,
+    default: 'https://placehold.co/200x200/0f172a/38bdf8?text=Marca',
+  })
+  fotografia: string;
 
   @CreateDateColumn({ name: 'fecha_creacion' })
   fechaCreacion: Date;

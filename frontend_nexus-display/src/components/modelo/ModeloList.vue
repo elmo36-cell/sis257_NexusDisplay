@@ -13,9 +13,9 @@ const emit = defineEmits(['edit'])
 
 const modelosFiltrados = computed(() => {
   return modelos.value.filter(
-    (modelo) =>
-      modelo.nombre.toLowerCase().includes(busqueda.value.toLowerCase()) ||
-      modelo.marca?.nombre.toLowerCase().includes(busqueda.value.toLowerCase()),
+    (m) =>
+      m.nombre.toLowerCase().includes(busqueda.value.toLowerCase()) ||
+      m.marca?.nombre?.toLowerCase().includes(busqueda.value.toLowerCase()),
   )
 })
 
@@ -53,34 +53,38 @@ defineExpose({ obtenerLista })
       </InputGroup>
     </div>
 
-    <table class="table table-bordered table-striped">
+    <table class="w-full border-collapse">
       <thead>
-        <tr>
-          <th>Nro.</th>
-          <th>Marca</th>
-          <th>Nombre del Modelo</th>
-          <th>Acciones</th>
+        <tr class="surface-200 text-left">
+          <th class="p-2">Nro.</th>
+          <th class="p-2">Fotografía</th>
+          <th class="p-2">Marca</th>
+          <th class="p-2">Nombre del Modelo</th>
+          <th class="p-2">Acciones</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(modelo, index) in modelosFiltrados" :key="modelo.id">
-          <td>{{ index + 1 }}</td>
-          <td>{{ modelo.marca?.nombre }}</td>
-          <td>{{ modelo.nombre }}</td>
-          <td>
+        <tr v-for="(modelo, index) in modelosFiltrados" :key="modelo.id" class="border-bottom-1 surface-border">
+          <td class="p-2">{{ index + 1 }}</td>
+          <td class="p-2">
+            <img :src="modelo.fotografia" :alt="modelo.nombre" height="45" class="border-round" />
+          </td>
+          <td class="p-2">{{ modelo.marca?.nombre }}</td>
+          <td class="p-2 font-semibold">{{ modelo.nombre }}</td>
+          <td class="p-2">
             <Button icon="pi pi-pencil" aria-label="Editar" text @click="emitirEdicion(modelo)" />
             <Button icon="pi pi-trash" aria-label="Eliminar" text severity="danger"
               @click="mostrarEliminarConfirm(modelo)" />
           </td>
         </tr>
         <tr v-if="modelosFiltrados.length === 0">
-          <td colspan="4">No se encontraron resultados.</td>
+          <td colspan="5" class="p-3 text-center">No se encontraron resultados.</td>
         </tr>
       </tbody>
     </table>
 
     <Dialog v-model:visible="mostrarConfirmDialog" header="Confirmar Eliminación" :style="{ width: '25rem' }">
-      <p>¿Estás seguro de que deseas eliminar el modelo <b>{{ modeloDelete?.nombre }}</b>?</p>
+      <p>¿Estás seguro de eliminar el modelo <strong>{{ modeloDelete?.nombre }}</strong>?</p>
       <div class="flex justify-end gap-2">
         <Button type="button" label="Cancelar" severity="secondary" @click="mostrarConfirmDialog = false" />
         <Button type="button" label="Eliminar" severity="danger" @click="eliminar" />

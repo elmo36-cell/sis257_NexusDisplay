@@ -4,32 +4,17 @@ import CompraSave from '@/components/compra/CompraSave.vue'
 import Button from 'primevue/button'
 import { ref } from 'vue'
 
-const mostrarDialog = ref<boolean>(false)
-const listRef = ref<typeof CompraList | null>(null)
-const itemEdit = ref<any>(null)
-
-function handleCreate() {
-  itemEdit.value = null
-  mostrarDialog.value = true
-}
-function handleEdit(item: any) {
-  itemEdit.value = item
-  mostrarDialog.value = true
-}
-function handleCloseDialog() {
-  mostrarDialog.value = false
-}
-function handleGuardar() {
-  listRef.value?.obtenerLista()
-}
+const mostrarDialog = ref(false)
+const compraListRef = ref<typeof CompraList | null>(null)
 </script>
 
 <template>
-  <div class="container py-5 mt-5">
-    <h2>Compras</h2>
-    <Button label="Crear Nuevo" icon="pi pi-plus" @click="handleCreate" />
-    <CompraList ref="listRef" @edit="handleEdit" />
-    <CompraSave :mostrar="mostrarDialog" :compra="itemEdit" :modoEdicion="!!itemEdit" @guardar="handleGuardar"
-      @close="handleCloseDialog" />
+  <div class="container mx-auto p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="m-0">Compras a Proveedores</h2>
+      <Button type="button" label="Registrar Compra" @click="mostrarDialog = true" />
+    </div>
+    <CompraList ref="compraListRef" />
+    <CompraSave :mostrar="mostrarDialog" @guardar="compraListRef?.obtenerLista()" @close="mostrarDialog = false" />
   </div>
 </template>

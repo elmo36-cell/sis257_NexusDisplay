@@ -8,41 +8,41 @@ import { InjectRepository } from '@nestjs/typeorm';
 @Injectable()
 export class AlmacenesService {
   constructor(
-    @InjectRepository(Almacen) private almacenesRepository: Repository<Almacen>,
+    @InjectRepository(Almacen) private repositorioAlmacenes: Repository<Almacen>,
   ) {}
 
-  async create(createAlmacenDto: CreateAlmacenDto): Promise<Almacen> {
-    let almacen = await this.almacenesRepository.findOneBy({
-      nombre: createAlmacenDto.nombre,
+  async crear(datosAlmacen: CreateAlmacenDto): Promise<Almacen> {
+    let almacen = await this.repositorioAlmacenes.findOneBy({
+      nombre: datosAlmacen.nombre,
     });
     if (almacen) throw new ConflictException('El almacén ya existe');
 
     almacen = new Almacen();
-    Object.assign(almacen, createAlmacenDto);
-    return this.almacenesRepository.save(almacen);
+    Object.assign(almacen, datosAlmacen);
+    return this.repositorioAlmacenes.save(almacen);
   }
 
-  async findAll(): Promise<Almacen[]> {
-    return this.almacenesRepository.find();
+  async listar(): Promise<Almacen[]> {
+    return this.repositorioAlmacenes.find();
   }
 
-  async findOne(id: number): Promise<Almacen> {
-    const almacen = await this.almacenesRepository.findOneBy({ id });
+  async obtenerPorId(id: number): Promise<Almacen> {
+    const almacen = await this.repositorioAlmacenes.findOneBy({ id });
     if (!almacen) throw new NotFoundException('El almacén no existe');
     return almacen;
   }
 
-  async update(
+  async actualizar(
     id: number,
-    updateAlmacenDto: UpdateAlmacenDto,
+    datosAlmacen: UpdateAlmacenDto,
   ): Promise<Almacen> {
-    const almacen = await this.findOne(id);
-    Object.assign(almacen, updateAlmacenDto);
-    return this.almacenesRepository.save(almacen);
+    const almacen = await this.obtenerPorId(id);
+    Object.assign(almacen, datosAlmacen);
+    return this.repositorioAlmacenes.save(almacen);
   }
 
-  async remove(id: number): Promise<Almacen> {
-    const almacen = await this.findOne(id);
-    return this.almacenesRepository.softRemove(almacen);
+  async eliminar(id: number): Promise<Almacen> {
+    const almacen = await this.obtenerPorId(id);
+    return this.repositorioAlmacenes.softRemove(almacen);
   }
 }

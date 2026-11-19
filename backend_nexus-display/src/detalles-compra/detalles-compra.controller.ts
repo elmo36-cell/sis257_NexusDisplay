@@ -27,34 +27,34 @@ export class DetallesCompraController {
 
   @Roles(RolNombre.ADMIN)
   @Post()
-  create(@Body() createDetalleCompraDto: CreateDetalleCompraDto) {
-    return this.detallesCompraService.create(createDetalleCompraDto);
+  crear(@Body() datosDetalleCompra: CreateDetalleCompraDto) {
+    return this.detallesCompraService.crear(datosDetalleCompra);
   }
 
   @Roles(RolNombre.ADMIN)
   @Get()
-  findAll() {
-    return this.detallesCompraService.findAll();
+  listar() {
+    return this.detallesCompraService.listar();
   }
 
   @Roles(RolNombre.ADMIN)
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.detallesCompraService.findOne(id);
+  obtenerPorId(@Param('id', ParseIntPipe) id: number) {
+    return this.detallesCompraService.obtenerPorId(id);
   }
 
   @Roles(RolNombre.ADMIN)
   @Patch(':id')
-  update(
+  actualizar(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateDetalleCompraDto: UpdateDetalleCompraDto,
+    @Body() datosDetalleCompra: UpdateDetalleCompraDto,
   ) {
-    return this.detallesCompraService.update(id, updateDetalleCompraDto);
+    return this.detallesCompraService.actualizar(id, datosDetalleCompra);
   }
 
   @Roles(RolNombre.ADMIN)
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.detallesCompraService.remove(id);
+  eliminar(@Param('id', ParseIntPipe) id: number) {
+    return this.detallesCompraService.eliminar(id);
   }
 }

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateDetalleVentaDto } from './dto/create-detalle-venta.dto';
 import { UpdateDetalleVentaDto } from './dto/update-detalle-venta.dto';
 import { DetalleVenta } from './entities/detalle-venta.entity';
+import { Venta } from '../ventas/entities/venta.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -9,25 +10,27 @@ import { Repository } from 'typeorm';
 export class DetallesVentaService {
   constructor(
     @InjectRepository(DetalleVenta)
-    private readonly detallesVentaRepository: Repository<DetalleVenta>,
+    private readonly repositorioDetallesVenta: Repository<DetalleVenta>,
+    @InjectRepository(Venta)
+    private readonly repositorioVentas: Repository<Venta>,
   ) {}
 
-  async create(
-    createDetalleVentaDto: CreateDetalleVentaDto,
+  async crear(
+    datosDetalleVenta: CreateDetalleVentaDto,
   ): Promise<DetalleVenta> {
     const detalle = new DetalleVenta();
-    Object.assign(detalle, createDetalleVentaDto);
+    Object.assign(detalle, datosDetalleVenta);
     detalle.subtotal = Number(
       (
-        Number(createDetalleVentaDto.cantidad) *
-        Number(createDetalleVentaDto.precioUnitario || 0)
+        Number(datosDetalleVenta.cantidad) *
+        Number(datosDetalleVenta.precioUnitario || 0)
       ).toFixed(2),
     );
-    return this.detallesVentaRepository.save(detalle);
+    return this.repositorioDetallesVenta.save(detalle);
   }
 
-  async findAll(): Promise<DetalleVenta[]> {
-    return this.detallesVentaRepository.find({
+  async listar(): Promise<DetalleVenta[]> {
+    return this.repositorioDetallesVenta.find({
       relations: {
         venta: {
           almacen: true,
@@ -42,8 +45,8 @@ export class DetallesVentaService {
     });
   }
 
-  async findOne(id: number): Promise<DetalleVenta> {
-    const detalle = await this.detallesVentaRepository.findOne({
+  async obtenerPorId(id: number): Promise<DetalleVenta> {
+    const detalle = await this.repositorioDetallesVenta.findOne({
       where: { id },
       relations: {
         venta: true,
@@ -56,17 +59,35 @@ export class DetallesVentaService {
     return detalle;
   }
 
-  async update(
+  async actualizar(
     id: number,
-    updateDetalleVentaDto: UpdateDetalleVentaDto,
+    datosDetalleVenta: UpdateDetalleVentaDto,
   ): Promise<DetalleVenta> {
-    const detalle = await this.findOne(id);
-    Object.assign(detalle, updateDetalleVentaDto);
-    return this.detallesVentaRepository.save(detalle);
+    const detalle = await this.obtenerPorId(id);
+    Object.assign(detalle, datosDetalleVenta);
+    // Si corrigen la cantidad o el precio, el subtotal de la línea y el total de
+    // la venta tienen que cambiar con ella.
+    detalle.subtotal = Number(
+      (Number(detalle.cantidad) * Number(detalle.precioUnitario)).toFixed(2),
+    );
+    const guardado = await this.repositorioDetallesVenta.save(detalle);
+    await this.recalcularTotalVenta(guardado.idVenta);
+    return guardado;
   }
 
-  async remove(id: number): Promise<DetalleVenta> {
-    const detalle = await this.findOne(id);
-    return this.detallesVentaRepository.softRemove(detalle);
+  private async recalcularTotalVenta(idVenta: number): Promise<void> {
+    const fila = await this.repositorioDetallesVenta
+      .createQueryBuilder('detalle')
+      .select('COALESCE(SUM(detalle.subtotal), 0)', 'total')
+      .where('detalle.idVenta = :idVenta', { idVenta })
+      .getRawOne<{ total: string }>();
+    await this.repositorioVentas.update(idVenta, {
+      total: Number(fila?.total ?? 0),
+    });
+  }
+
+  async eliminar(id: number): Promise<DetalleVenta> {
+    const detalle = await this.obtenerPorId(id);
+    return this.repositorioDetallesVenta.softRemove(detalle);
   }
 }

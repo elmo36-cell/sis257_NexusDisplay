@@ -27,34 +27,34 @@ export class ProveedoresController {
 
   @Roles(RolNombre.ADMIN)
   @Post()
-  create(@Body() createProveedorDto: CreateProveedorDto) {
-    return this.proveedoresService.create(createProveedorDto);
+  crear(@Body() datosProveedor: CreateProveedorDto) {
+    return this.proveedoresService.crear(datosProveedor);
   }
 
   @Roles(RolNombre.ADMIN)
   @Get()
-  findAll() {
-    return this.proveedoresService.findAll();
+  listar() {
+    return this.proveedoresService.listar();
   }
 
   @Roles(RolNombre.ADMIN)
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.proveedoresService.findOne(id);
+  obtenerPorId(@Param('id', ParseIntPipe) id: number) {
+    return this.proveedoresService.obtenerPorId(id);
   }
 
   @Roles(RolNombre.ADMIN)
   @Patch(':id')
-  update(
+  actualizar(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateProveedorDto: UpdateProveedorDto,
+    @Body() datosProveedor: UpdateProveedorDto,
   ) {
-    return this.proveedoresService.update(id, updateProveedorDto);
+    return this.proveedoresService.actualizar(id, datosProveedor);
   }
 
   @Roles(RolNombre.ADMIN)
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.proveedoresService.remove(id);
+  eliminar(@Param('id', ParseIntPipe) id: number) {
+    return this.proveedoresService.eliminar(id);
   }
 }

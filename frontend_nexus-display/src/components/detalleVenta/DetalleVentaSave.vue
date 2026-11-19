@@ -2,11 +2,12 @@
 import type { DetalleVenta } from '@/models/detalle-venta'
 import type { Venta } from '@/models/venta'
 import type { Pantalla } from '@/models/pantalla'
-import http from '@/plugins/axios'
+import clienteApi from '@/plugins/axios'
+import { mensajeDeError, notify } from '@/helpers/notificaciones'
 import { Button, Dialog, InputNumber, Select } from 'primevue'
 import { computed, ref, watch } from 'vue'
 
-const ENDPOINT = 'detalles-venta'
+const RUTA_API = 'detalles-venta'
 const props = defineProps({
   mostrar: Boolean,
   detalleVenta: {
@@ -21,7 +22,7 @@ const ventas = ref<Venta[]>([])
 const pantallas = ref<Pantalla[]>([])
 const detalleVenta = ref<DetalleVenta>({ ...props.detalleVenta })
 
-const dialogVisible = computed({
+const dialogoVisible = computed({
   get: () => props.mostrar,
   set: (value) => {
     if (!value) emit('close')
@@ -30,8 +31,8 @@ const dialogVisible = computed({
 
 async function obtenerDatos() {
   const [resVentas, resPantallas] = await Promise.all([
-    http.get('ventas'),
-    http.get('pantallas'),
+    clienteApi.get('ventas'),
+    clienteApi.get('pantallas'),
   ])
   ventas.value = resVentas.data
   pantallas.value = resPantallas.data
@@ -39,38 +40,39 @@ async function obtenerDatos() {
 
 watch(
   () => props.mostrar,
-  (newVal) => {
-    if (newVal) {
+  (nuevoValor) => {
+    if (nuevoValor) {
       obtenerDatos()
       detalleVenta.value = { ...props.detalleVenta }
     }
   },
 )
 
-async function handleSave() {
+async function guardarCambios() {
   try {
-    const body = {
+    const cuerpo = {
       idVenta: detalleVenta.value.idVenta,
       idPantalla: detalleVenta.value.idPantalla,
       cantidad: Number(detalleVenta.value.cantidad),
       precioUnitario: Number(detalleVenta.value.precioUnitario),
     }
     if (props.modoEdicion) {
-      await http.patch(`${ENDPOINT}/${detalleVenta.value.id}`, body)
+      await clienteApi.patch(`${RUTA_API}/${detalleVenta.value.id}`, cuerpo)
     } else {
-      await http.post(ENDPOINT, body)
+      await clienteApi.post(RUTA_API, cuerpo)
     }
     emit('guardar')
     detalleVenta.value = {} as DetalleVenta
-    dialogVisible.value = false
-  } catch (error: any) {
-    alert(error?.response?.data?.message || 'Error al guardar el detalle de venta')
+    dialogoVisible.value = false
+    notify.success('Detalle de venta guardado correctamente')
+  } catch (error) {
+    notify.error(mensajeDeError(error, 'Error al guardar el detalle de venta'))
   }
 }
 </script>
 
 <template>
-  <Dialog v-model:visible="dialogVisible"
+  <Dialog v-model:visible="dialogoVisible"
     :header="props.modoEdicion ? 'Editar Detalle de Venta' : 'Crear Detalle de Venta'" style="width: 25rem" modal>
     <div class="flex flex-column gap-3">
       <div>
@@ -92,8 +94,8 @@ async function handleSave() {
         <InputNumber v-model="detalleVenta.precioUnitario" mode="decimal" :minFractionDigits="2" class="w-full" />
       </div>
       <div class="flex justify-end gap-2">
-        <Button type="button" label="Cancelar" icon="pi pi-times" severity="secondary" @click="dialogVisible = false" />
-        <Button type="button" label="Guardar" icon="pi pi-save" @click="handleSave" />
+        <Button type="button" label="Cancelar" icon="pi pi-times" severity="secondary" @click="dialogoVisible = false" />
+        <Button type="button" label="Guardar" icon="pi pi-save" @click="guardarCambios" />
       </div>
     </div>
   </Dialog>

@@ -11,37 +11,37 @@ import { Repository } from 'typeorm';
 
 @Injectable()
 export class MarcasService {
-  constructor(@InjectRepository(Marca) private marcasRepository: Repository<Marca>) {}
+  constructor(@InjectRepository(Marca) private repositorioMarcas: Repository<Marca>) {}
 
-  async create(createMarcaDto: CreateMarcaDto): Promise<Marca> {
-    let marca = await this.marcasRepository.findOneBy({
-      nombre: createMarcaDto.nombre,
+  async crear(datosMarca: CreateMarcaDto): Promise<Marca> {
+    let marca = await this.repositorioMarcas.findOneBy({
+      nombre: datosMarca.nombre,
     });
     if (marca) throw new ConflictException('La marca ya existe');
 
     marca = new Marca();
-    Object.assign(marca, createMarcaDto);
-    return this.marcasRepository.save(marca);
+    Object.assign(marca, datosMarca);
+    return this.repositorioMarcas.save(marca);
   }
 
-  async findAll(): Promise<Marca[]> {
-    return this.marcasRepository.find();
+  async listar(): Promise<Marca[]> {
+    return this.repositorioMarcas.find();
   }
 
-  async findOne(id: number): Promise<Marca> {
-    const marca = await this.marcasRepository.findOneBy({ id });
+  async obtenerPorId(id: number): Promise<Marca> {
+    const marca = await this.repositorioMarcas.findOneBy({ id });
     if (!marca) throw new NotFoundException('La marca no existe');
     return marca;
   }
 
-  async update(id: number, updateMarcaDto: UpdateMarcaDto): Promise<Marca> {
-    const marca = await this.findOne(id);
-    Object.assign(marca, updateMarcaDto);
-    return this.marcasRepository.save(marca);
+  async actualizar(id: number, datosMarca: UpdateMarcaDto): Promise<Marca> {
+    const marca = await this.obtenerPorId(id);
+    Object.assign(marca, datosMarca);
+    return this.repositorioMarcas.save(marca);
   }
 
-  async remove(id: number): Promise<Marca> {
-    const marca = await this.findOne(id);
-    return this.marcasRepository.softRemove(marca);
+  async eliminar(id: number): Promise<Marca> {
+    const marca = await this.obtenerPorId(id);
+    return this.repositorioMarcas.softRemove(marca);
   }
 }

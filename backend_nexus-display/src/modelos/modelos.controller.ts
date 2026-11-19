@@ -18,33 +18,33 @@ export class ModelosController {
   @ApiBearerAuth()
   @Roles(RolNombre.ADMIN)
   @Post()
-  create(@Body() createModeloDto: CreateModeloDto) {
-    return this.modelosService.create(createModeloDto);
+  crear(@Body() datosModelo: CreateModeloDto) {
+    return this.modelosService.crear(datosModelo);
   }
 
   @AuthPublic()
   @Get()
-  findAll() {
-    return this.modelosService.findAll();
+  listar() {
+    return this.modelosService.listar();
   }
 
   @AuthPublic()
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.modelosService.findOne(id);
+  obtenerPorId(@Param('id', ParseIntPipe) id: number) {
+    return this.modelosService.obtenerPorId(id);
   }
 
   @ApiBearerAuth()
   @Roles(RolNombre.ADMIN)
   @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() updateModeloDto: UpdateModeloDto) {
-    return this.modelosService.update(id, updateModeloDto);
+  actualizar(@Param('id', ParseIntPipe) id: number, @Body() datosModelo: UpdateModeloDto) {
+    return this.modelosService.actualizar(id, datosModelo);
   }
 
   @ApiBearerAuth()
   @Roles(RolNombre.ADMIN)
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.modelosService.remove(id);
+  eliminar(@Param('id', ParseIntPipe) id: number) {
+    return this.modelosService.eliminar(id);
   }
 }

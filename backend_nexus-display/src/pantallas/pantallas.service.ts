@@ -13,22 +13,22 @@ import { UpdatePantallaDto } from './dto/update-pantalla.dto';
 export class PantallasService {
   constructor(
     @InjectRepository(Pantalla)
-    private pantallasRepository: Repository<Pantalla>,
+    private repositorioPantallas: Repository<Pantalla>,
   ) {}
 
-  async create(createPantallaDto: CreatePantallaDto): Promise<Pantalla> {
-    let pantalla = await this.pantallasRepository.findOneBy({
-      codigo: createPantallaDto.codigo,
+  async crear(datosPantalla: CreatePantallaDto): Promise<Pantalla> {
+    let pantalla = await this.repositorioPantallas.findOneBy({
+      codigo: datosPantalla.codigo,
     });
     if (pantalla) throw new ConflictException('La pantalla ya existe');
 
     pantalla = new Pantalla();
-    Object.assign(pantalla, createPantallaDto);
-    return this.pantallasRepository.save(pantalla);
+    Object.assign(pantalla, datosPantalla);
+    return this.repositorioPantallas.save(pantalla);
   }
 
-  async findAll(): Promise<Pantalla[]> {
-    return this.pantallasRepository.find({
+  async listar(): Promise<Pantalla[]> {
+    return this.repositorioPantallas.find({
       relations: {
         modelo: { marca: true },
         calidad: true,
@@ -39,8 +39,8 @@ export class PantallasService {
     });
   }
 
-  async findOne(id: number): Promise<Pantalla> {
-    const pantalla = await this.pantallasRepository.findOne({
+  async obtenerPorId(id: number): Promise<Pantalla> {
+    const pantalla = await this.repositorioPantallas.findOne({
       where: { id },
       relations: {
         modelo: { marca: true },
@@ -53,17 +53,17 @@ export class PantallasService {
     return pantalla;
   }
 
-  async update(
+  async actualizar(
     id: number,
-    updatePantallaDto: UpdatePantallaDto,
+    datosPantalla: UpdatePantallaDto,
   ): Promise<Pantalla> {
-    const pantalla = await this.findOne(id);
-    Object.assign(pantalla, updatePantallaDto);
-    return this.pantallasRepository.save(pantalla);
+    const pantalla = await this.obtenerPorId(id);
+    Object.assign(pantalla, datosPantalla);
+    return this.repositorioPantallas.save(pantalla);
   }
 
-  async remove(id: number): Promise<Pantalla> {
-    const pantalla = await this.findOne(id);
-    return this.pantallasRepository.softRemove(pantalla);
+  async eliminar(id: number): Promise<Pantalla> {
+    const pantalla = await this.obtenerPorId(id);
+    return this.repositorioPantallas.softRemove(pantalla);
   }
 }

@@ -1,166 +1,212 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useAuthStore } from '@/stores'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { Select } from 'primevue'
+import Menu from 'primevue/menu'
+import { useSesionStore } from '@/stores'
+import { useCarritoStore } from '@/stores/carrito'
+import { notify } from '@/helpers/notificaciones'
 
-const authStore = useAuthStore()
-const router = useRouter()
+const sesion = useSesionStore()
+const carrito = useCarritoStore()
 const route = useRoute()
+const router = useRouter()
 
-const rutaSeleccionada = ref<string>(route.path)
+const navAbierto = ref(false)
+const menuAdminAbierto = ref(false)
+const adminMenuRef = ref<InstanceType<typeof Menu> | null>(null)
 
-watch(
-  () => route.path,
-  (nuevaRuta) => {
-    rutaSeleccionada.value = nuevaRuta
-  },
-)
+interface EnlaceNav {
+  label: string
+  to: string
+  icon: string
+}
 
-const modulosPorJerarquia = computed(() => {
-  if (authStore.rol === 'ADMIN') {
+const enlaces = computed<EnlaceNav[]>(() => {
+  const base: EnlaceNav[] = [{ label: 'Catálogo', to: '/', icon: 'pi pi-th-large' }]
+
+  if (!sesion.estaAutenticado) {
+    return [...base, { label: 'Contacto', to: '/#contacto-vendedores', icon: 'pi pi-comments' }]
+  }
+
+  if (sesion.esCliente) {
     return [
-      { label: 'Pantallas', value: '/pantallas' },
-      { label: 'Inventario por Almacén', value: '/inventario' },
-      { label: 'Almacenes y Direcciones', value: '/almacenes' },
-      { label: 'Categorías de Repuestos', value: '/categorias' },
-      { label: 'Calidades', value: '/calidades' },
-      { label: 'Marcas', value: '/marcas' },
-      { label: 'Modelos', value: '/modelos' },
-      { label: 'Ventas', value: '/ventas' },
-      { label: 'Detalles de Venta', value: '/detalles-venta' },
-      { label: 'Compras a Proveedores', value: '/compras' },
-      { label: 'Detalles de Compra', value: '/detalles-compra' },
-      { label: 'Proveedores', value: '/proveedores' },
-      { label: 'Usuarios y Roles', value: '/usuarios' },
+      ...base,
+      { label: 'Mis compras', to: '/ventas', icon: 'pi pi-shopping-bag' },
+      { label: 'Contacto', to: '/#contacto-vendedores', icon: 'pi pi-comments' },
     ]
   }
 
-  if (authStore.rol === 'VENDEDOR') {
-    return [
-      { label: 'Ventas', value: '/ventas' },
-      { label: 'Detalles de Venta', value: '/detalles-venta' },
-      { label: 'Inventario por Almacén', value: '/inventario' },
-      { label: 'Direcciones de Almacenes', value: '/almacenes' },
-      { label: 'Categorías de Repuestos', value: '/categorias' },
-      { label: 'Añadir / Ver Clientes', value: '/usuarios' },
-    ]
-  }
-
-  return []
+  return [
+    ...base,
+    { label: 'Ventas', to: '/ventas', icon: 'pi pi-shopping-carrito' },
+    { label: 'Inventario', to: '/inventario', icon: 'pi pi-box' },
+    { label: 'Almacenes', to: '/almacenes', icon: 'pi pi-building' },
+    { label: 'Categorías', to: '/categorias', icon: 'pi pi-tags' },
+    { label: sesion.esAdmin ? 'Usuarios' : 'Clientes', to: '/usuarios', icon: 'pi pi-users' },
+  ]
 })
 
-function irAModulo(ruta: string) {
-  if (ruta) {
-    router.push(ruta)
-  }
+const enlacesAdmin = computed<EnlaceNav[]>(() =>
+  sesion.esAdmin
+    ? [
+      { label: 'Pantallas', to: '/pantallas', icon: 'pi pi-mobile' },
+      { label: 'Marcas', to: '/marcas', icon: 'pi pi-bookmark' },
+      { label: 'Modelos', to: '/modelos', icon: 'pi pi-list' },
+      { label: 'Calidades', to: '/calidades', icon: 'pi pi-star' },
+      { label: 'Proveedores', to: '/proveedores', icon: 'pi pi-truck' },
+      { label: 'Compras', to: '/compras', icon: 'pi pi-download' },
+      { label: 'Detalles de compra', to: '/detalles-compra', icon: 'pi pi-file' },
+      { label: 'Detalles de venta', to: '/detalles-venta', icon: 'pi pi-receipt' },
+    ]
+    : [],
+)
+
+const adminItems = computed(() =>
+  enlacesAdmin.value.map((enlace) => ({
+    label: enlace.label,
+    icon: enlace.icon,
+    command: () => router.push(enlace.to),
+  })),
+)
+
+const claseRol = computed(() => {
+  if (sesion.rol === 'ADMIN') return 'nexus-role--admin'
+  if (sesion.rol === 'VENDEDOR') return 'nexus-role--vendedor'
+  return ''
+})
+
+function rutaBase(ruta: string) {
+  return ruta.split('#')[0] || '/'
 }
+
+function esActiva(ruta: string) {
+  return route.path === rutaBase(ruta)
+}
+
+function irA(ruta: string) {
+  navAbierto.value = false
+  router.push(ruta)
+}
+
+function toggleAdmin(evento: Event) {
+  adminMenuRef.value?.toggle(evento)
+}
+
+function cerrarSesion() {
+  navAbierto.value = false
+  sesion.cerrarSesion()
+  notify.info('Sesión finalizada correctamente')
+  router.push({ name: 'login' })
+}
+
+watch(
+  () => route.fullPath,
+  () => {
+    navAbierto.value = false
+    adminMenuRef.value?.hide?.()
+  },
+)
 </script>
 
 <template>
-  <nav class="navbar navbar-expand-lg navbar-dark shadow-sm sticky-top px-3 py-2"
-    style="background-color: #0f172a !important; border-bottom: 3px solid #06b6d4">
-    <div class="container-fluid">
-      <RouterLink to="/" class="navbar-brand fw-bold">
-        <span class="text-info">NEXUS</span> DISPLAY
-      </RouterLink>
+  <header class="nexus-nav">
+    <div class="container">
+      <div class="nexus-nav__inner">
+        <RouterLink to="/" class="nexus-brand">
+          <span class="nexus-brand__mark">N</span>
+          <span class="nexus-brand__text">
+            Nexus Display
+            <small>Pantallas y repuestos</small>
+          </span>
+        </RouterLink>
 
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNexus">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-
-      <div class="collapse navbar-collapse" id="navbarNexus">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0 align-items-lg-center gap-2">
-          <!-- Visible para todos -->
-          <li class="nav-item">
-            <RouterLink to="/" class="nav-link text-white fw-semibold">
-              Catálogo Web
-            </RouterLink>
-          </li>
-
-          <!-- Para Visitante o CLIENTE: Enlace directo al Contacto del Vendedor -->
-          <li v-if="!authStore.token || authStore.rol === 'CLIENTE'" class="nav-item">
-            <a href="/#contacto-vendedores" class="nav-link text-white">
-              Contacto Vendedor
-            </a>
-          </li>
-
-          <!-- Para CLIENTE logueado: Solo ve sus propias compras (no puede añadir clientes) -->
-          <li v-if="authStore.token && authStore.rol === 'CLIENTE'" class="nav-item">
-            <RouterLink to="/ventas" class="nav-link text-white">
-              Mis Compras
-            </RouterLink>
-          </li>
-
-          <!-- Para VENDEDOR y ADMIN -->
-          <template v-if="authStore.token && (authStore.rol === 'ADMIN' || authStore.rol === 'VENDEDOR')">
-            <li class="nav-item">
-              <RouterLink to="/ventas" class="nav-link text-white">
-                Ventas
+        <nav class="d-none d-lg-flex align-articulos-center" aria-label="Navegación principal">
+          <ul class="nexus-links">
+            <li v-for="enlace in enlaces" :key="enlace.to">
+              <RouterLink :to="enlace.to" class="nexus-link" :class="{ 'is-active': esActiva(enlace.to) }">
+                <i :class="enlace.icon"></i>
+                <span>{{ enlace.label }}</span>
               </RouterLink>
             </li>
-            <li class="nav-item">
-              <RouterLink to="/inventario" class="nav-link text-white">
-                Inventario
-              </RouterLink>
+            <li v-if="sesion.esAdmin">
+              <button type="button" class="nexus-link" :class="{ 'is-active': menuAdminAbierto }" aria-haspopup="true"
+                @click="toggleAdmin">
+                <i class="pi pi-cog"></i>
+                <span>Administración</span>
+                <i class="pi pi-angle-down" style="font-size: 0.65rem"></i>
+              </button>
             </li>
-            <li class="nav-item">
-              <RouterLink to="/almacenes" class="nav-link text-white">
-                Almacenes
-              </RouterLink>
-            </li>
-            <li class="nav-item">
-              <RouterLink to="/categorias" class="nav-link text-white">
-                Categorías
-              </RouterLink>
-            </li>
-            <li class="nav-item">
-              <RouterLink to="/usuarios" class="nav-link text-info fw-semibold">
-                {{ authStore.rol === 'VENDEDOR' ? 'Añadir Clientes' : 'Usuarios' }}
-              </RouterLink>
-            </li>
-          </template>
+          </ul>
+        </nav>
 
-          <!-- Exclusivo para ADMIN -->
-          <template v-if="authStore.token && authStore.rol === 'ADMIN'">
-            <li class="nav-item">
-              <RouterLink to="/pantallas" class="nav-link text-white">
-                Pantallas
-              </RouterLink>
-            </li>
-            <li class="nav-item">
-              <RouterLink to="/compras" class="nav-link text-white">
-                Compras
-              </RouterLink>
-            </li>
-          </template>
+        <div class="ms-auto d-flex align-articulos-center gap-2">
+          <button type="button" class="nexus-carrito" aria-label="Abrir carrito de compras" @click="carrito.abrir()">
+            <i class="pi pi-shopping-carrito"></i>
+            <span v-if="carrito.unidades" class="nexus-cart__badge">{{ carrito.unidades }}</span>
+          </button>
 
-          <!-- SELECT DE NAVEGACIÓN PARA VENDEDOR Y ADMIN -->
-          <li v-if="authStore.token && modulosPorJerarquia.length > 0" class="nav-item ms-lg-2">
-            <Select v-model="rutaSeleccionada" :options="modulosPorJerarquia" optionLabel="label" optionValue="value"
-              :placeholder="`Módulos (${authStore.rol})`" class="w-15rem" @update:modelValue="irAModulo" />
-          </li>
-        </ul>
-
-        <!-- Sesión activa -->
-        <div class="d-flex align-items-center gap-2">
-          <template v-if="authStore.token">
-            <span class="badge py-2 px-3 fw-bold" :class="{
-              'bg-primary text-white': authStore.rol === 'ADMIN',
-              'bg-success text-white': authStore.rol === 'VENDEDOR',
-              'bg-info text-dark': authStore.rol === 'CLIENTE',
-            }">
-              {{ authStore.user }} ({{ authStore.rol }})
-            </span>
-            <button @click="authStore.logout()" class="btn btn-danger btn-sm">
-              Salir
+          <div v-if="sesion.estaAutenticado" class="nexus-user d-none d-sm-inline-flex">
+            <span class="nexus-user__name">{{ sesion.usuario }}</span>
+            <span class="nexus-role" :class="claseRol">{{ sesion.rol }}</span>
+            <button type="button" class="nexus-icon-btn" style="width: 32px; height: 32px" title="Cerrar sesión"
+              aria-label="Cerrar sesión" @click="cerrarSesion">
+              <i class="pi pi-sign-out" style="font-size: 0.8rem"></i>
             </button>
-          </template>
-          <RouterLink v-else to="/login" class="btn btn-info btn-sm fw-bold text-dark">
-            Iniciar Sesión
+          </div>
+
+          <RouterLink v-else to="/login"
+            class="btn btn-info btn-sm fw-bold d-none d-sm-inline-flex align-articulos-center gap-2">
+            <i class="pi pi-user"></i>
+            <span>Iniciar sesión</span>
           </RouterLink>
+
+          <button type="button" class="nexus-icon-btn d-lg-none" :aria-expanded="navAbierto"
+            aria-label="Abrir menú de navegación" @click="navAbierto = !navAbierto">
+            <i :class="navAbierto ? 'pi pi-times' : 'pi pi-bars'"></i>
+          </button>
         </div>
       </div>
     </div>
-  </nav>
+
+    <div v-if="navAbierto" class="nexus-mobile-panel d-lg-none">
+      <div class="container d-flex flex-column gap-1">
+        <button v-for="enlace in enlaces" :key="`m-${enlace.to}`" type="button" class="nexus-link"
+          :class="{ 'is-active': esActiva(enlace.to) }" @click="irA(enlace.to)">
+          <i :class="enlace.icon"></i>
+          <span>{{ enlace.label }}</span>
+        </button>
+
+        <template v-if="enlacesAdmin.length">
+          <div class="section-label mt-3 mb-1 px-1" style="color: #94a3b8">Administración</div>
+          <button v-for="enlace in enlacesAdmin" :key="`m-${enlace.label}`" type="button" class="nexus-link"
+            :class="{ 'is-active': esActiva(enlace.to) }" @click="irA(enlace.to)">
+            <i :class="enlace.icon"></i>
+            <span>{{ enlace.label }}</span>
+          </button>
+        </template>
+
+        <button type="button" class="nexus-link mt-1" @click="carrito.abrir(); navAbierto = false">
+          <i class="pi pi-shopping-carrito"></i>
+          <span>Carrito ({{ carrito.unidades }})</span>
+        </button>
+
+        <div class="d-flex align-articulos-center gap-2 border-top mt-3 pt-3"
+          style="border-color: rgba(148,163,184,.2) !important">
+          <template v-if="sesion.estaAutenticado">
+            <span class="nexus-user__name">{{ sesion.usuario }}</span>
+            <span class="nexus-role" :class="claseRol">{{ sesion.rol }}</span>
+            <button type="button" class="btn btn-outline-light btn-sm ms-auto" @click="cerrarSesion">
+              Salir
+            </button>
+          </template>
+          <button v-else type="button" class="btn btn-info btn-sm fw-bold w-100" @click="irA('/login')">
+            Iniciar sesión
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <Menu ref="adminMenuRef" :model="adminItems" popup @show="menuAdminAbierto = true"
+      @hide="menuAdminAbierto = false" />
+  </header>
 </template>

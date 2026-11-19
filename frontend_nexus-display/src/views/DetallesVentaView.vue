@@ -1,32 +1,43 @@
 <script setup lang="ts">
 import type { DetalleVenta } from '@/models/detalle-venta'
-import http from '@/plugins/axios'
-import { Button, InputText } from 'primevue'
-import { computed, onMounted, ref } from 'vue'
+import DetalleVentaList from '@/components/detalleVenta/DetalleVentaList.vue'
+import DetalleVentaSave from '@/components/detalleVenta/DetalleVentaSave.vue'
+import clienteApi from '@/plugins/axios'
+import { useSesionStore } from '@/stores'
+import { mensajeDeError, notify } from '@/helpers/notificaciones'
+import { Button } from 'primevue'
+import { onMounted, ref } from 'vue'
 
-const ENDPOINT = 'detalles-venta'
+const RUTA_API = 'detalles-venta'
+const sesion = useSesionStore()
 const detalles = ref<DetalleVenta[]>([])
-const busqueda = ref<string>('')
-
-const detallesFiltrados = computed(() => {
-  return detalles.value.filter((d) => {
-    const q = busqueda.value.toLowerCase()
-    return (
-      (d.pantalla?.nombre ?? '').toLowerCase().includes(q) ||
-      (d.pantalla?.codigo ?? '').toLowerCase().includes(q) ||
-      (d.venta?.nombreCliente ?? '').toLowerCase().includes(q) ||
-      String(d.idVenta ?? d.venta?.id ?? '').includes(q)
-    )
-  })
+const editorVisible = ref(false)
+const detalleSeleccionado = ref<DetalleVenta>({
+  id: 0,
+  idVenta: 0,
+  idPantalla: 0,
+  cantidad: 1,
+  precioUnitario: 0,
+  subtotal: 0,
 })
 
 async function obtenerLista() {
-  detalles.value = await http.get(ENDPOINT).then((response) => response.data)
+  try {
+    const { data } = await clienteApi.get(RUTA_API)
+    detalles.value = Array.isArray(data) ? data : []
+  } catch (error) {
+    notify.error(mensajeDeError(error, 'No se pudo cargar el detalle de ventas'))
+  }
 }
 
-onMounted(() => {
-  obtenerLista()
-})
+// El lápiz de cada fila abre el formulario de detalle en modo edición: así el
+// DetalleVentaSave también se usa y no queda como código muerto.
+function abrirEdicion(detalle: DetalleVenta) {
+  detalleSeleccionado.value = detalle
+  editorVisible.value = true
+}
+
+onMounted(obtenerLista)
 </script>
 
 <template>
@@ -41,52 +52,9 @@ onMounted(() => {
       <Button type="button" label="Actualizar Lista" severity="secondary" @click="obtenerLista" />
     </div>
 
-    <div class="col-12 col-md-6 pl-0 mt-3 mb-3">
-      <InputText v-model="busqueda" type="text"
-        placeholder="Buscar por pantalla, código SKU, cliente o Nro. de venta..." class="w-100" />
-    </div>
+    <DetalleVentaList :detalles="detalles" :editable="sesion.esAdmin" @editar="abrirEdicion" />
 
-    <table class="table table-hover align-middle bg-white shadow-sm rounded">
-      <thead class="table-dark">
-        <tr>
-          <th>Nro.</th>
-          <th>Venta #</th>
-          <th>Cliente</th>
-          <th>Código SKU</th>
-          <th>Pantalla Vendida</th>
-          <th>Cantidad Vendida</th>
-          <th>Precio Unitario</th>
-          <th>Subtotal</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(det, index) in detallesFiltrados" :key="det.id">
-          <td>{{ index + 1 }}</td>
-          <td class="fw-bold">#{{ det.idVenta || det.venta?.id }}</td>
-          <td>{{ det.venta?.nombreCliente || 'S/N' }}</td>
-          <td>{{ det.pantalla?.codigo || '-' }}</td>
-          <td class="fw-semibold text-dark">{{ det.pantalla?.nombre }}</td>
-          <td>
-            <span class="badge bg-info text-dark px-3 py-2 fw-bold">
-              {{ det.cantidad }} {{ Number(det.cantidad) === 1 ? 'unidad' : 'unidades' }}
-            </span>
-          </td>
-          <td>Bs. {{ Number(det.precioUnitario).toFixed(2) }}</td>
-          <td class="fw-bold text-primary">
-            Bs.
-            {{
-              det.subtotal
-                ? Number(det.subtotal).toFixed(2)
-                : (Number(det.cantidad) * Number(det.precioUnitario)).toFixed(2)
-            }}
-          </td>
-        </tr>
-        <tr v-if="detallesFiltrados.length === 0">
-          <td colspan="8" class="text-center py-4">
-            No hay detalles de venta registrados todavía.
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <DetalleVentaSave :mostrar="editorVisible" :detalle-venta="detalleSeleccionado" modo-edicion
+      @guardar="obtenerLista" @close="editorVisible = false" />
   </div>
 </template>

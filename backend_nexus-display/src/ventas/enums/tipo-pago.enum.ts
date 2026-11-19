@@ -1,0 +1,6 @@
+export enum TipoPago {
+  EFECTIVO = 'EFECTIVO',
+  QR_YAPE = 'QR / YAPE',
+  TRANSFERENCIA = 'TRANSFERENCIA BANCARIA',
+  TARJETA = 'TARJETA',
+}

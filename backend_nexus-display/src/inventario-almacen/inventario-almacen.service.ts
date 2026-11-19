@@ -13,15 +13,15 @@ import { Repository } from 'typeorm';
 export class InventarioAlmacenService {
   constructor(
     @InjectRepository(InventarioAlmacen)
-    private inventarioAlmacenRepository: Repository<InventarioAlmacen>,
+    private repositorioInventarioAlmacen: Repository<InventarioAlmacen>,
   ) {}
 
-  async create(
-    createInventarioAlmacenDto: CreateInventarioAlmacenDto,
+  async crear(
+    datosInventarioAlmacen: CreateInventarioAlmacenDto,
   ): Promise<InventarioAlmacen> {
-    let inventario = await this.inventarioAlmacenRepository.findOneBy({
-      idPantalla: createInventarioAlmacenDto.idPantalla,
-      idAlmacen: createInventarioAlmacenDto.idAlmacen,
+    let inventario = await this.repositorioInventarioAlmacen.findOneBy({
+      idPantalla: datosInventarioAlmacen.idPantalla,
+      idAlmacen: datosInventarioAlmacen.idAlmacen,
     });
     if (inventario) {
       throw new ConflictException(
@@ -30,21 +30,35 @@ export class InventarioAlmacenService {
     }
 
     inventario = new InventarioAlmacen();
-    Object.assign(inventario, createInventarioAlmacenDto);
-    return this.inventarioAlmacenRepository.save(inventario);
+    Object.assign(inventario, datosInventarioAlmacen);
+    return this.repositorioInventarioAlmacen.save(inventario);
   }
 
-  async findAll(): Promise<InventarioAlmacen[]> {
-    return this.inventarioAlmacenRepository.find({
+  /**
+   * Listado de inventario: el ADMIN ve todas las sucursales y el VENDEDOR solo
+   * el stock del almacén que tiene asignado, así no ve mercadería de tiendas que
+   * no le corresponden. Si el vendedor no tiene sucursal devuelvo vacío en vez
+   * de mostrarle todo el inventario de la empresa.
+   */
+  async listar(usuario?: {
+    rol?: string;
+    idAlmacen?: number | null;
+  }): Promise<InventarioAlmacen[]> {
+    const esVendedor = usuario?.rol === 'VENDEDOR';
+    if (esVendedor && !usuario?.idAlmacen) return [];
+
+    return this.repositorioInventarioAlmacen.find({
+      where: esVendedor ? { idAlmacen: Number(usuario?.idAlmacen) } : {},
       relations: {
         pantalla: { modelo: { marca: true }, calidad: true, categoria: true },
         almacen: true,
       },
+      order: { id: 'ASC' },
     });
   }
 
-  async findOne(id: number): Promise<InventarioAlmacen> {
-    const inventario = await this.inventarioAlmacenRepository.findOne({
+  async obtenerPorId(id: number): Promise<InventarioAlmacen> {
+    const inventario = await this.repositorioInventarioAlmacen.findOne({
       where: { id },
       relations: {
         pantalla: { modelo: { marca: true }, calidad: true, categoria: true },
@@ -56,17 +70,17 @@ export class InventarioAlmacenService {
     return inventario;
   }
 
-  async update(
+  async actualizar(
     id: number,
-    updateInventarioAlmacenDto: UpdateInventarioAlmacenDto,
+    datosInventarioAlmacen: UpdateInventarioAlmacenDto,
   ): Promise<InventarioAlmacen> {
-    const inventario = await this.findOne(id);
-    Object.assign(inventario, updateInventarioAlmacenDto);
-    return this.inventarioAlmacenRepository.save(inventario);
+    const inventario = await this.obtenerPorId(id);
+    Object.assign(inventario, datosInventarioAlmacen);
+    return this.repositorioInventarioAlmacen.save(inventario);
   }
 
-  async remove(id: number): Promise<InventarioAlmacen> {
-    const inventario = await this.findOne(id);
-    return this.inventarioAlmacenRepository.softRemove(inventario);
+  async eliminar(id: number): Promise<InventarioAlmacen> {
+    const inventario = await this.obtenerPorId(id);
+    return this.repositorioInventarioAlmacen.softRemove(inventario);
   }
 }

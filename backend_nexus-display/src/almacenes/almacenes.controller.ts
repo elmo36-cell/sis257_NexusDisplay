@@ -28,36 +28,36 @@ export class AlmacenesController {
   @ApiBearerAuth()
   @Roles(RolNombre.ADMIN)
   @Post()
-  create(@Body() createAlmacenDto: CreateAlmacenDto) {
-    return this.almacenesService.create(createAlmacenDto);
+  crear(@Body() datosAlmacen: CreateAlmacenDto) {
+    return this.almacenesService.crear(datosAlmacen);
   }
 
   @AuthPublic()
   @Get()
-  findAll() {
-    return this.almacenesService.findAll();
+  listar() {
+    return this.almacenesService.listar();
   }
 
   @AuthPublic()
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.almacenesService.findOne(id);
+  obtenerPorId(@Param('id', ParseIntPipe) id: number) {
+    return this.almacenesService.obtenerPorId(id);
   }
 
   @ApiBearerAuth()
   @Roles(RolNombre.ADMIN)
   @Patch(':id')
-  update(
+  actualizar(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateAlmacenDto: UpdateAlmacenDto,
+    @Body() datosAlmacen: UpdateAlmacenDto,
   ) {
-    return this.almacenesService.update(id, updateAlmacenDto);
+    return this.almacenesService.actualizar(id, datosAlmacen);
   }
 
   @ApiBearerAuth()
   @Roles(RolNombre.ADMIN)
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.almacenesService.remove(id);
+  eliminar(@Param('id', ParseIntPipe) id: number) {
+    return this.almacenesService.eliminar(id);
   }
 }

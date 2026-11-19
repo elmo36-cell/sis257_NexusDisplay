@@ -1,70 +1,129 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useAuthStore } from '@/stores/index'
+import { computed, ref } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
+import { useSesionStore } from '@/stores'
+import { useCarritoStore } from '@/stores/carrito'
+import { mensajeDeError, notify } from '@/helpers/notificaciones'
+import type { AxiosError } from 'axios'
+
+const sesion = useSesionStore()
+const carrito = useCarritoStore()
+const router = useRouter()
 
 const nombreUsuario = ref('')
 const clave = ref('')
-const error = ref(false)
+const verClave = ref(false)
+const cargando = ref(false)
+const mensajeError = ref('')
 
-function onSubmit() {
-  const authStore = useAuthStore()
-  authStore.login(nombreUsuario.value, clave.value).catch(() => (error.value = true))
+const puedeEnviar = computed(
+  () => nombreUsuario.value.trim().length > 0 && clave.value.length > 0 && !cargando.value,
+)
+
+async function onSubmit() {
+  if (!puedeEnviar.value) return
+  mensajeError.value = ''
+  cargando.value = true
+
+  try {
+    const destino = await sesion.iniciarSesion(nombreUsuario.value.trim(), clave.value)
+    notify.success(`Bienvenido, ${sesion.usuario}`)
+
+    if (carrito.pendienteCheckout) {
+      carrito.pendienteCheckout = false
+      carrito.abrir()
+    }
+
+    await router.replace(destino)
+  } catch (error) {
+    const err = error as AxiosError<{ message?: string | string[] }>
+    const estado = err.response?.status
+    mensajeError.value =
+      estado === 401
+        ? 'Usuario o contraseña incorrectos.'
+        : mensajeDeError(error, 'No se pudo iniciar sesión. Verifica tu conexión e inténtalo otra vez.')
+    notify.error(mensajeError.value)
+  } finally {
+    cargando.value = false
+  }
 }
 </script>
 
 <template>
-  <div class="my-5 pt-5">
-    <h1 class="text-center">Iniciar Sesión - Nexus Display</h1>
-    <form class="form" @submit.prevent="onSubmit">
-      <label class="form-label">Usuario:</label>
-      <input v-model="nombreUsuario" type="text" class="form-input" placeholder="Usuario (ej: admin, vendedor, cliente)"
-        autofocus />
+  <div class="login-shell">
+    <div class="container">
+      <div class="login-card">
+        <aside class="login-aside">
+          <div>
+            <RouterLink to="/" class="nexus-brand">
+              <span class="nexus-brand__mark">N</span>
+              <span class="nexus-brand__text">
+                Nexus Display
+                <small>Pantallas y repuestos</small>
+              </span>
+            </RouterLink>
 
-      <label class="form-label">Contraseña:</label>
-      <input v-model="clave" type="password" class="form-input" placeholder="Contraseña" />
+            <h2>Todo el catálogo y el inventario en un solo lugar.</h2>
+            <p>
+              Consulta disponibilidad por sucursal, registra ventas y controla tus compras a
+              proveedores con trazabilidad completa.
+            </p>
+          </div>
 
-      <p v-if="error" class="text-danger">Usuario y/o contraseña incorrectos</p>
-      <input type="submit" class="form-submit" value="Ingresar" />
-    </form>
+          <ul class="login-benefits">
+            <li><i class="pi pi-check-circle"></i><span>Catálogo filtrado por marca, modelo y calidad</span></li>
+            <li><i class="pi pi-check-circle"></i><span>Inventario actualizado por almacén</span></li>
+            <li><i class="pi pi-check-circle"></i><span>Historial de compras para cada cliente</span></li>
+          </ul>
+        </aside>
+
+        <div class="login-form">
+          <h3>Iniciar sesión</h3>
+          <p class="login-form__hint">Accede con las credenciales asignadas por tu administrador.</p>
+
+          <form novalidate @submit.prevent="onSubmit">
+            <div class="field-group">
+              <label for="login-usuario">Nombre de usuario</label>
+              <input id="login-usuario" v-model="nombreUsuario" class="form-control" type="text" autocomplete="username"
+                placeholder="Ej: admin" autofocus />
+            </div>
+
+            <div class="field-group">
+              <label for="login-clave">Contraseña</label>
+              <div class="position-relative">
+                <input id="login-clave" v-model="clave" class="form-control pe-5" :type="verClave ? 'text' : 'password'"
+                  autocomplete="current-password" placeholder="Tu contraseña" />
+                <button type="button"
+                  class="btn btn-link position-absolute top-50 end-0 translate-middle-y text-secondary px-3 py-0"
+                  :aria-label="verClave ? 'Ocultar contraseña' : 'Mostrar contraseña'" @click="verClave = !verClave">
+                  <i :class="verClave ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
+                </button>
+              </div>
+            </div>
+
+            <div v-if="mensajeError" class="alert alert-danger py-2 px-3 small d-flex align-articulos-start gap-2"
+              role="alert">
+              <i class="pi pi-exclamation-circle mt-1"></i>
+              <span>{{ mensajeError }}</span>
+            </div>
+
+            <button type="submit"
+              class="btn btn-primary w-100 mt-2 d-flex align-articulos-center justify-content-center gap-2"
+              :disabled="!puedeEnviar">
+              <span v-if="cargando" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              <i v-else class="pi pi-sign-in"></i>
+              <span>{{ cargando ? 'Verificando…' : 'Ingresar' }}</span>
+            </button>
+          </form>
+
+          <p class="text-center small text-muted mt-4 mb-0">
+            ¿Eres un cliente nuevo?
+            <RouterLink to="/registro" class="fw-semibold">Regístrate aquí</RouterLink>
+            <br />
+            <RouterLink to="/" class="fw-semibold">Volver al catálogo</RouterLink>
+          </p>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
-
-<style scoped>
-.form {
-  margin: 1.5rem auto;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  width: 20%;
-  min-width: 350px;
-  max-width: 100%;
-  background: rgba(19, 35, 47, 0.9);
-  border-radius: 5px;
-  padding: 40px;
-  box-shadow: 0 4px 10px 4px rgba(0, 0, 0, 0.3);
-}
-
-.form-label {
-  margin-top: 2rem;
-  color: white;
-  margin-bottom: 0.5rem;
-}
-
-.form-input {
-  padding: 10px 15px;
-  background: none;
-  background-image: none;
-  border: 1px solid white;
-  color: white;
-}
-
-.form-submit {
-  background: #06b6d4;
-  border: none;
-  color: white;
-  margin-top: 3rem;
-  padding: 1rem 0;
-  cursor: pointer;
-  font-weight: bold;
-}
-</style>

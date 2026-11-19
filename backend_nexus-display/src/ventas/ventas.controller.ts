@@ -28,38 +28,49 @@ export class VentasController {
 
   @Roles(RolNombre.ADMIN, RolNombre.VENDEDOR, RolNombre.CLIENTE)
   @Post()
-  create(@Body() createVentaDto: CreateVentaDto, @Req() req: any) {
-    const idUsuarioFinal = createVentaDto.idUsuario || req.user?.id || 1;
-    return this.ventasService.create({
-      ...createVentaDto,
+  crear(@Body() datosVenta: CreateVentaDto, @Req() req: any) {
+    // El usuario lo saco de la sesión y no de lo que mande el navegador.
+    const idUsuarioFinal = datosVenta.idUsuario || req.user?.id || 1;
+    // Si es vendedor, ignoro el almacén del formulario y uso el suyo,
+    // así no puede registrar ventas en sucursales que no le tocan.
+    const idAlmacenFinal =
+      req.user?.rol === RolNombre.VENDEDOR && req.user?.idAlmacen
+        ? Number(req.user.idAlmacen)
+        : datosVenta.idAlmacen;
+
+    return this.ventasService.crear({
+      ...datosVenta,
+      idAlmacen: idAlmacenFinal,
       idUsuario: Number(idUsuarioFinal),
     });
   }
 
+  // Los tres roles pueden entrar, pero el service filtra qué ventas ve cada uno.
   @Roles(RolNombre.ADMIN, RolNombre.VENDEDOR, RolNombre.CLIENTE)
   @Get()
-  findAll() {
-    return this.ventasService.findAll();
+  listar(@Req() req: any) {
+    return this.ventasService.listar(req.user);
   }
 
   @Roles(RolNombre.ADMIN, RolNombre.VENDEDOR, RolNombre.CLIENTE)
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.ventasService.findOne(id);
+  obtenerPorId(@Param('id', ParseIntPipe) id: number) {
+    return this.ventasService.obtenerPorId(id);
   }
 
   @Roles(RolNombre.ADMIN, RolNombre.VENDEDOR)
   @Patch(':id')
-  update(
+  actualizar(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateVentaDto: UpdateVentaDto,
+    @Body() datosVenta: UpdateVentaDto,
   ) {
-    return this.ventasService.update(id, updateVentaDto);
+    return this.ventasService.actualizar(id, datosVenta);
   }
 
+  // Solo el admin puede anular ventas.
   @Roles(RolNombre.ADMIN)
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.ventasService.remove(id);
+  eliminar(@Param('id', ParseIntPipe) id: number) {
+    return this.ventasService.eliminar(id);
   }
 }

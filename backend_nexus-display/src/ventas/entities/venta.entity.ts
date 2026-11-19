@@ -12,6 +12,7 @@ import {
 import { Usuario } from '../../usuarios/entities/usuario.entity';
 import { DetalleVenta } from '../../detalles-venta/entities/detalle-venta.entity';
 import { Almacen } from '../../almacenes/entities/almacen.entity';
+import { TipoPago } from '../enums/tipo-pago.enum';
 
 @Entity('ventas')
 export class Venta {
@@ -29,6 +30,9 @@ export class Venta {
 
   @Column('varchar', { length: 30, name: 'documento_cliente', default: '0' })
   documentoCliente: string;
+
+  @Column('varchar', { length: 30, name: 'tipo_pago', default: TipoPago.EFECTIVO })
+  tipoPago: TipoPago;
 
   @CreateDateColumn()
   fecha: Date;

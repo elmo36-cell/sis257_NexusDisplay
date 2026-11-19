@@ -29,7 +29,7 @@ function handleGuardar() {
 
 <template>
   <div class="container mx-auto p-4">
-    <div class="flex justify-content-between align-items-center mb-3">
+    <div class="flex justify-content-between align-articulos-center mb-3">
       <h2 class="m-0">Pantallas</h2>
       <Button label="Crear Nuevo" icon="pi pi-plus" @click="handleCreate" />
     </div>

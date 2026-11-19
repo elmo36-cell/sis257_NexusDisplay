@@ -3,6 +3,7 @@ import { Transform, Type } from 'class-transformer';
 import {
   ArrayMinSize,
   IsArray,
+  IsEnum,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -12,6 +13,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { CreateDetalleVentaDto } from '../../detalles-venta/dto/create-detalle-venta.dto';
+import { TipoPago } from '../enums/tipo-pago.enum';
 
 export class CreateVentaDto {
   @ApiProperty({required: false, example: 1 })
@@ -50,6 +52,14 @@ export class CreateVentaDto {
     typeof value == 'string' ? value.trim() : value,
   )
   readonly documentoCliente?: string;
+
+  @ApiProperty({ enum: TipoPago, required: false, default: TipoPago.EFECTIVO })
+  @IsOptional()
+  @IsEnum(TipoPago, {
+    message: 'El tipo de pago debe ser: EFECTIVO, QR / YAPE, TRANSFERENCIA BANCARIA o TARJETA',
+  })
+  @Transform(({ value }): string | undefined => (typeof value === 'string' ? value.trim() : value))
+  readonly tipoPago?: TipoPago;
 
   @ApiProperty({ type: [CreateDetalleVentaDto] })
   @IsArray({ message: 'Los detalles deben ser un arreglo' })

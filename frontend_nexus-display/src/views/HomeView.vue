@@ -1,408 +1,692 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import http from '@/plugins/axios'
+import { computed, onMounted, ref, watch } from 'vue'
+import { RouterLink } from 'vue-router'
+import clienteApi from '@/plugins/axios'
+import { useSesionStore } from '@/stores'
+import { useCarritoStore } from '@/stores/carrito'
+import { formatearMoneda, iniciales } from '@/helpers'
+import { coincideBusqueda } from '@/helpers/busqueda'
+import { notify } from '@/helpers/notificaciones'
 import type { Pantalla } from '@/models/pantalla'
 import type { Marca } from '@/models/marca'
 import type { Calidad } from '@/models/calidad'
 import type { Categoria } from '@/models/categoria'
 import type { Almacen } from '@/models/almacen'
-import { useAuthStore } from '@/stores'
-import { Button, Dialog, InputText, Select } from 'primevue'
-import router from '@/router'
-import type { AxiosError } from 'axios'
 
-const authStore = useAuthStore()
+interface VendedorContacto {
+  id: number
+  nombreUsuario: string
+  correo: string
+  telefono?: string
+  rol: string
+}
+
+const sesion = useSesionStore()
+const carrito = useCarritoStore()
+
 const pantallas = ref<Pantalla[]>([])
 const marcas = ref<Marca[]>([])
 const calidades = ref<Calidad[]>([])
 const categorias = ref<Categoria[]>([])
 const almacenes = ref<Almacen[]>([])
-const vendedoresContacto = ref<
-  { id: number; nombreUsuario: string; correo: string; telefono: string; rol: string }[]
->([])
+const vendedores = ref<VendedorContacto[]>([])
+
+const cargando = ref(true)
+const errorCarga = ref('')
 
 const busqueda = ref('')
-const idMarcaSeleccionada = ref<number | null>(null)
-const idCalidadSeleccionada = ref<number | null>(null)
-const idCategoriaSeleccionada = ref<number | null>(null)
+const filtroMarca = ref('')
+const filtroCalidad = ref('')
+const filtroCategoria = ref('')
+// Una sola casilla para el marco: si está tildada solo muestro las pantallas
+// armadas (con marco); si está destildada muestro todo el catálogo.
+const soloConMarco = ref(false)
 
-const mostrarCarrito = ref(false)
-const nombreCliente = ref('')
-const documentoCliente = ref('')
-const idAlmacenSeleccionado = ref<number | null>(null)
-const carrito = ref<{ pantalla: Pantalla; cantidad: number }[]>([])
+// Paginación del catálogo: cuántos productos veo por página y en cuál estoy.
+// Dejo 12 por defecto porque la grilla se acomoda de a 6 columnas en pantallas anchas.
+const OPCIONES_POR_PAGINA: number[] = [12, 24, 48]
+const porPagina = ref<number>(12)
+const paginaActual = ref(1)
 
-async function obtenerCatalogo() {
-  const [resPantallas, resMarcas, resCalidades, resCategorias, resAlmacenes, resVendedores] =
-    await Promise.all([
-      http.get('pantallas'),
-      http.get('marcas'),
-      http.get('calidades'),
-      http.get('categorias'),
-      http.get('almacenes'),
-      http.get('usuarios/contactos-vendedores'),
-    ])
-  pantallas.value = resPantallas.data
-  marcas.value = resMarcas.data
-  calidades.value = resCalidades.data
-  categorias.value = resCategorias.data
-  almacenes.value = resAlmacenes.data
-  vendedoresContacto.value = resVendedores.data
+const IMAGEN_FALLBACK =
+  'data:image/svg+xml;charset=UTF-8,' +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="400" height="300" fill="#0b1220"/><rect x="152" y="66" width="96" height="168" rx="14" fill="none" stroke="#22d3ee" stroke-width="4"/><circle cx="200" cy="214" r="7" fill="#22d3ee"/></svg>',
+  )
 
-  if (almacenes.value.length > 0 && !idAlmacenSeleccionado.value) {
-    idAlmacenSeleccionado.value = almacenes.value[0]?.id ?? null
+async function cargarLista<T>(url: string): Promise<{ datos: T[]; ok: boolean }> {
+  try {
+    const { data } = await clienteApi.get(url)
+    return { datos: (Array.isArray(data) ? data : []) as T[], ok: true }
+  } catch {
+    return { datos: [] as T[], ok: false }
   }
 }
 
-function obtenerStockTotal(pantalla: Pantalla): number {
-  return pantalla.inventarios?.reduce((acc, inv) => acc + Number(inv.cantidad), 0) || 0
+async function cargarCatalogo() {
+  cargando.value = true
+  errorCarga.value = ''
+
+  const [resPantallas, resMarcas, resCalidades, resCategorias, resAlmacenes, resVendedores] =
+    await Promise.all([
+      cargarLista<Pantalla>('pantallas'),
+      cargarLista<Marca>('marcas'),
+      cargarLista<Calidad>('calidades'),
+      cargarLista<Categoria>('categorias'),
+      cargarLista<Almacen>('almacenes'),
+      cargarLista<VendedorContacto>('usuarios/contactos-vendedores'),
+    ])
+
+  pantallas.value = resPantallas.datos
+  marcas.value = resMarcas.datos
+  calidades.value = resCalidades.datos
+  categorias.value = resCategorias.datos
+  almacenes.value = resAlmacenes.datos
+  vendedores.value = resVendedores.datos
+
+  if (!resPantallas.ok) {
+    errorCarga.value =
+      'No se pudo conectar con el servidor. Verifica que la API esté disponible e inténtalo de nuevo.'
+  }
+
+  cargando.value = false
+
+  // Si es un cliente registrado en una sucursal, dejo el carrito apuntando a esa
+  // sucursal para que el stock que se valida al comprar sea el de su tienda.
+  if (sesion.esCliente && idAlmacenSesion.value && !carrito.idAlmacen) {
+    carrito.seleccionarAlmacen(idAlmacenSesion.value)
+  }
 }
 
-const pantallasFiltradas = computed(() => {
-  return pantallas.value.filter((p) => {
-    const q = busqueda.value.toLowerCase()
-    const coincideTexto =
-      p.nombre.toLowerCase().includes(q) ||
-      p.codigo.toLowerCase().includes(q) ||
-      (p.modelo?.nombre ?? '').toLowerCase().includes(q) ||
-      (p.modelo?.marca?.nombre ?? '').toLowerCase().includes(q) ||
-      (p.categoria?.nombre ?? '').toLowerCase().includes(q)
+// Sucursal de la persona logueada: el vendedor y el cliente miran el stock de
+// la sucursal que tienen asignada (el cliente, la tienda donde se registró).
+// Un visitante sin sesión o el admin ven el stock sumado de todas las tiendas.
+const idAlmacenSesion = computed(() =>
+  sesion.estaAutenticado && sesion.tieneSucursal ? Number(sesion.idAlmacen) : 0,
+)
 
-    const coincideMarca = !idMarcaSeleccionada.value || p.modelo?.idMarca === idMarcaSeleccionada.value
-    const coincideCalidad = !idCalidadSeleccionada.value || p.idCalidad === idCalidadSeleccionada.value
+const nombreAlmacenSesion = computed(
+  () => almacenes.value.find((almacen) => almacen.id === idAlmacenSesion.value)?.nombre ?? '',
+)
+
+function stockTotal(pantalla: Pantalla): number {
+  const inventarios = pantalla.inventarios ?? []
+  // Cuando hay sucursal en la sesión solo sumo las cantidades de esa sucursal,
+  // así no ofrezco un producto que en su tienda no está disponible.
+  const disponibles = idAlmacenSesion.value
+    ? inventarios.filter((inv) => Number(inv.idAlmacen) === idAlmacenSesion.value)
+    : inventarios
+  return disponibles.reduce((acc, inv) => acc + Number(inv.cantidad || 0), 0)
+}
+
+const pantallasFiltradas = computed(() =>
+  pantallas.value.filter((pantalla) => {
+    const coincideTexto = coincideBusqueda(busqueda.value, [
+      pantalla.nombre,
+      pantalla.codigo,
+      pantalla.modelo?.nombre,
+      pantalla.modelo?.marca?.nombre,
+      pantalla.categoria?.nombre,
+      pantalla.calidad?.nombre,
+    ])
+    const coincideMarca = !filtroMarca.value || String(pantalla.modelo?.idMarca) === filtroMarca.value
+    const coincideCalidad = !filtroCalidad.value || String(pantalla.idCalidad) === filtroCalidad.value
     const coincideCategoria =
-      !idCategoriaSeleccionada.value || p.idCategoria === idCategoriaSeleccionada.value
+      !filtroCategoria.value || String(pantalla.idCategoria) === filtroCategoria.value
+    // La casilla de marco es opcional y solo aplica a Pantallas: si no está
+    // tildada (o la categoría no es Pantallas) no filtra nada.
+    const coincideMarco = !marcoDisponible.value || !soloConMarco.value || pantalla.conMarco
 
-    return coincideTexto && coincideMarca && coincideCalidad && coincideCategoria
-  })
+    return coincideTexto && coincideMarca && coincideCalidad && coincideCategoria && coincideMarco
+  }),
+)
+
+const categoriasConConteo = computed(() =>
+  categorias.value.map((categoria) => ({
+    ...categoria,
+    total: pantallas.value.filter((pantalla) => pantalla.idCategoria === categoria.id).length,
+  })),
+)
+
+const categoriaActiva = computed(
+  () => categorias.value.find((categoria) => String(categoria.id) === filtroCategoria.value)?.nombre ?? '',
+)
+
+// El marco solo existe en la categoría "Pantallas": las baterías, los pines de
+// carga y las entradas de carga no se arman con marco, así que la casilla de
+// "Con marco" queda deshabilitada cuando se elige cualquiera de esas categorías.
+const marcoDisponible = computed(
+  () => categoriaActiva.value.trim().toLowerCase() === 'pantallas',
+)
+
+const hayFiltros = computed(
+  () =>
+    busqueda.value.trim() !== '' ||
+    filtroMarca.value !== '' ||
+    filtroCalidad.value !== '' ||
+    filtroCategoria.value !== '' ||
+    soloConMarco.value,
+)
+
+const conStock = computed(() => pantallas.value.filter((p) => stockTotal(p) > 0).length)
+
+// Ordeno la lista ya filtrada: primero los que tienen stock y al final los
+// agotados. Dentro de cada grupo ordeno por nombre para que el orden sea estable
+// y no se muevan las tarjetas entre páginas.
+const pantallasOrdenadas = computed(() =>
+  [...pantallasFiltradas.value].sort((a, b) => {
+    const stockA = stockTotal(a)
+    const stockB = stockTotal(b)
+    const tieneStockA = stockA > 0
+    const tieneStockB = stockB > 0
+
+    if (tieneStockA !== tieneStockB) return tieneStockA ? -1 : 1
+    return (a.nombre ?? '').localeCompare(b.nombre ?? '', 'es')
+  }),
+)
+
+// Cantidad total de páginas según los resultados actuales (mínimo 1 para no
+// dividir entre cero cuando el filtro no devuelve nada).
+const totalPaginas = computed(() =>
+  Math.max(1, Math.ceil(pantallasOrdenadas.value.length / porPagina.value)),
+)
+
+// Solo las tarjetas de la página en la que estoy parado.
+const productosPagina = computed(() => {
+  const inicio = (paginaActual.value - 1) * porPagina.value
+  return pantallasOrdenadas.value.slice(inicio, inicio + porPagina.value)
 })
 
-function seleccionarMarcaTarjeta(idMarca: number) {
-  idMarcaSeleccionada.value = idMarcaSeleccionada.value === idMarca ? null : idMarca
+const rangoInicio = computed(() =>
+  pantallasOrdenadas.value.length === 0 ? 0 : (paginaActual.value - 1) * porPagina.value + 1,
+)
+
+const rangoFin = computed(() =>
+  Math.min(paginaActual.value * porPagina.value, pantallasOrdenadas.value.length),
+)
+
+// Muestro solo unas páginas alrededor de la actual, así la barra no crece
+// demasiado cuando hay cientos de productos.
+const paginasVisibles = computed(() => {
+  const ventana = 2
+  const inicio = Math.max(1, paginaActual.value - ventana)
+  const fin = Math.min(totalPaginas.value, paginaActual.value + ventana)
+  const paginas: number[] = []
+
+  for (let pagina = inicio; pagina <= fin; pagina++) paginas.push(pagina)
+  return paginas
+})
+
+function irAPagina(pagina: number) {
+  paginaActual.value = Math.min(Math.max(1, pagina), totalPaginas.value)
+  document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function limpiarFiltros() {
+  busqueda.value = ''
+  filtroMarca.value = ''
+  filtroCalidad.value = ''
+  filtroCategoria.value = ''
+  soloConMarco.value = false
+  paginaActual.value = 1
+}
+
+function alternarMarca(idMarca: number) {
+  filtroMarca.value = filtroMarca.value === String(idMarca) ? '' : String(idMarca)
+}
+
+function usarFallback(evento: Event) {
+  const img = evento.target as HTMLImageElement
+  if (img.src !== IMAGEN_FALLBACK) img.src = IMAGEN_FALLBACK
 }
 
 function agregarAlCarrito(pantalla: Pantalla) {
-  if (!authStore.token) {
-    router.push('/login')
-    return
-  }
+  const resultado = carrito.agregar(pantalla)
 
-  const stockMax = obtenerStockTotal(pantalla)
-  if (stockMax <= 0) {
-    alert('Esta pantalla no tiene stock disponible.')
-    return
-  }
-
-  if (!nombreCliente.value && authStore.user) {
-    nombreCliente.value = authStore.user
-  }
-
-  // Seleccionar automáticamente el almacén donde haya stock de esta pantalla
-  const invConStock = pantalla.inventarios?.find((inv) => Number(inv.cantidad) > 0)
-  if (invConStock) {
-    idAlmacenSeleccionado.value = invConStock.idAlmacen
-  }
-
-  const existente = carrito.value.find((c) => c.pantalla.id === pantalla.id)
-  if (existente) {
-    if (existente.cantidad < stockMax) {
-      existente.cantidad++
+  if (!resultado.ok) {
+    if (resultado.motivo === 'SIN_STOCK') {
+      notify.error(`"${pantalla.nombre}" está agotado por el momento`)
     } else {
-      alert(`Solo hay ${stockMax} unidades disponibles en stock.`)
+      notify.warn(`Solo hay ${resultado.disponible} unidad(es) disponibles de "${pantalla.nombre}"`)
     }
-  } else {
-    carrito.value.push({ pantalla, cantidad: 1 })
+    return
   }
 
-  mostrarCarrito.value = true
-}
-
-function cambiarCantidadCarrito(index: number, delta: number) {
-  const item = carrito.value[index]
-  if (!item) return
-  const stockMax = obtenerStockTotal(item.pantalla)
-  const nuevaCant = item.cantidad + delta
-  if (nuevaCant >= 1 && nuevaCant <= stockMax) {
-    item.cantidad = nuevaCant
+  if (!carrito.nombreCliente && sesion.estaAutenticado) {
+    carrito.nombreCliente = sesion.nombreCompleto || sesion.usuario
   }
+
+  notify.success(`"${pantalla.nombre}" agregado al carrito`)
+  carrito.abrir()
 }
 
-function quitarDelCarrito(idPantalla: number) {
-  carrito.value = carrito.value.filter((c) => c.pantalla.id !== idPantalla)
-}
-
-const totalCarrito = computed(() =>
-  carrito.value.reduce((acc, item) => acc + Number(item.cantidad) * Number(item.pantalla.precioVenta), 0),
+// Si cambio cualquier filtro o el tamaño de página, vuelvo a la primera página
+// para no quedar parado en una página que ya no existe.
+watch(
+  [busqueda, filtroMarca, filtroCalidad, filtroCategoria, soloConMarco, porPagina],
+  () => {
+    paginaActual.value = 1
+  },
 )
 
-async function confirmarCompra() {
-  if (carrito.value.length === 0) return
+// Red de seguridad por si la lista se achica (por ejemplo al recargar catálogo)
+// y la página actual queda fuera de rango.
+watch(totalPaginas, (total) => {
+  if (paginaActual.value > total) paginaActual.value = total
+})
 
-  if (!idAlmacenSeleccionado.value) {
-    alert('Seleccione la sucursal / almacén de retiro.')
-    return
-  }
+// Si cambio a una categoría que no es Pantallas, destildo "Con marco" para que
+// no quede un filtro activo que ya no se puede usar.
+watch(marcoDisponible, (disponible) => {
+  if (!disponible) soloConMarco.value = false
+})
 
-  try {
-    await http.post('ventas', {
-      idUsuario: Number(authStore.userId || 1),
-      idAlmacen: Number(idAlmacenSeleccionado.value),
-      nombreCliente: nombreCliente.value.trim() || authStore.user || 'CLIENTE WEB',
-      documentoCliente: documentoCliente.value.trim() || '0',
-      detalles: carrito.value.map((c) => ({
-        idVenta: 1,
-        idPantalla: Number(c.pantalla.id),
-        cantidad: Number(c.cantidad),
-        precioUnitario: Number(c.pantalla.precioVenta),
-      })),
-    })
-
-    carrito.value = []
-    mostrarCarrito.value = false
-    await obtenerCatalogo()
-    alert('¡Tu compra fue registrada con éxito! Puedes verla en la sección Mis Compras.')
-  } catch (error) {
-    const err = error as AxiosError<{ message?: string | string[] }>
-    const msg = Array.isArray(err.response?.data?.message)
-      ? err.response?.data?.message.join(', ')
-      : err.response?.data?.message
-    alert(msg || 'Error al procesar la compra')
-  }
-}
+watch(
+  () => carrito.catalogoVersion,
+  () => cargarCatalogo(),
+)
 
 onMounted(() => {
-  obtenerCatalogo()
+  cargarCatalogo()
 })
 </script>
 
 <template>
   <div>
-    <!-- Encabezado del Catálogo -->
-    <section class="hero-banner text-white py-5 mb-4">
-      <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center">
-        <div>
-          <span class="badge bg-info text-dark mb-2 px-3 py-1 fw-bold">CATÁLOGO OFICIAL</span>
-          <h1 class="display-5 fw-bold m-0">Catálogo <em class="text-info fst-normal">Nexus Display</em></h1>
-          <p class="lead mt-2 mb-0 text-light">
-            Pantallas Originales, OLED, AMOLED e Incell clasificadas por Marca, Calidad y Categoría.
-          </p>
-        </div>
-        <div class="mt-3 mt-md-0 d-flex gap-2">
-          <a href="#contacto-vendedores" class="btn btn-outline-light">
-            Contactar Vendedor
-          </a>
-          <Button v-if="authStore.token && (authStore.rol === 'ADMIN' || authStore.rol === 'VENDEDOR')" type="button"
-            label="Categorías de Repuestos" severity="secondary" @click="router.push('/categorias')" />
-          <Button v-if="authStore.token" type="button" :label="`Carrito (${carrito.length})`" severity="info"
-            @click="mostrarCarrito = true" />
+    <!-- Hero -->
+    <section class="nexus-hero">
+      <div class="nexus-hero__glow" aria-hidden="true"></div>
+      <div class="container">
+        <div class="row align-articulos-center g-4">
+          <div class="col-lg-7">
+            <span class="nexus-hero__eyebrow"><i class="pi pi-bolt"></i>Catálogo oficial</span>
+            <h1 class="nexus-hero__title">
+              Pantallas y repuestos con <em>stock verificado</em> por sucursal
+            </h1>
+            <p class="nexus-hero__text">
+              Explora el catálogo por categoría, marca y calidad. Consulta la disponibilidad real de
+              cada almacén y registra tu pedido en minutos.
+            </p>
+
+            <div class="nexus-hero__actions">
+              <a href="#catalogo" class="btn btn-info fw-bold">
+                <i class="pi pi-search me-2"></i>Ver catálogo
+              </a>
+              <a href="#contacto-vendedores" class="btn btn-outline-light">
+                <i class="pi pi-comments me-2"></i>Hablar con un vendedor
+              </a>
+              <button v-if="carrito.unidades" type="button" class="btn btn-outline-light" @click="carrito.abrir()">
+                <i class="pi pi-shopping-carrito me-2"></i>
+                Carrito ({{ carrito.unidades }})
+              </button>
+            </div>
+
+            <div class="nexus-hero__stats">
+              <div class="hero-stat">
+                <span class="hero-stat__value">{{ pantallas.length }}</span>
+                <span class="hero-stat__label">Productos</span>
+              </div>
+              <div class="hero-stat">
+                <span class="hero-stat__value">{{ conStock }}</span>
+                <span class="hero-stat__label">Con stock</span>
+              </div>
+              <div class="hero-stat">
+                <span class="hero-stat__value">{{ marcas.length }}</span>
+                <span class="hero-stat__label">Marcas</span>
+              </div>
+            </div>
+
+            <div class="hero-highlights">
+              <span><i class="pi pi-verified"></i>Stock real por sucursal</span>
+              <span><i class="pi pi-credit-card"></i>Transferencia, QR o efectivo</span>
+              <span><i class="pi pi-truck"></i>Retiro en tienda</span>
+            </div>
+          </div>
+
+          <div class="col-lg-5 d-none d-lg-flex justify-content-end">
+            <div class="info-card hero-panel">
+              <div class="d-flex align-articulos-center gap-2 mb-3">
+                <span class="nexus-brand__mark" style="width: 30px; height: 30px; font-size: 0.85rem">
+                  <i class="pi pi-shield"></i>
+                </span>
+                <strong class="text-white">Compra protegida</strong>
+              </div>
+              <ul class="hero-panel__list mb-0 ps-3">
+                <li>Stock validado contra inventario real</li>
+                <li>Retiro en la sucursal que elijas</li>
+                <li>Pago por transferencia, QR o efectivo</li>
+              </ul>
+              <div class="hero-panel__foot">
+                <i class="pi pi-headphones"></i> ¿Dudas? Escríbenos por WhatsApp
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
-    <div class="container pb-5">
-      <!-- 1. Marcas disponibles -->
-      <div v-if="marcas.length > 0" class="mb-4">
-        <h5 class="fw-bold text-dark mb-3">Marcas Disponibles</h5>
-        <div class="d-flex flex-wrap gap-3">
-          <div v-for="m in marcas" :key="m.id" @click="seleccionarMarcaTarjeta(m.id)"
-            class="bg-white px-3 py-2 rounded shadow-sm d-flex align-items-center gap-2 border"
-            :class="idMarcaSeleccionada === m.id ? 'border-info border-2 bg-info-subtle' : ''" style="cursor: pointer">
-            <img :src="m.fotografia" :alt="m.nombre" style="width: 32px; height: 32px; object-fit: contain" />
-            <span class="fw-semibold text-dark">{{ m.nombre }}</span>
+    <div id="catalogo" class="container page-shell">
+      <div v-if="errorCarga" class="alert alert-warning d-flex align-articulos-center gap-2 mb-4" role="alert">
+        <i class="pi pi-exclamation-triangle"></i>
+        <span class="flex-grow-1">{{ errorCarga }}</span>
+        <button type="button" class="btn btn-sm btn-outline-secondary" @click="cargarCatalogo">
+          Reintentar
+        </button>
+      </div>
+
+      <div class="catalog-head">
+        <div>
+          <span class="section-label">Catálogo</span>
+          <h2 class="catalog-head__title">Encuentra la pantalla exacta</h2>
+          <p class="catalog-head__text">
+            Filtra por categoría, marca o calidad y agrega al carrito con stock real de tu sucursal.
+          </p>
+        </div>
+        <div class="catalog-head__stat">
+          <span>{{ pantallasFiltradas.length }}</span>
+          <small>resultados</small>
+        </div>
+      </div>
+
+      <!-- Marcas -->
+      <section v-if="marcas.length" class="mb-3">
+        <h2 class="section-label">Marcas disponibles</h2>
+        <div class="d-flex flex-wrap gap-2">
+          <button v-for="marca in marcas" :key="marca.id" type="button" class="brand-chip"
+            :class="{ 'is-active': filtroMarca === String(marca.id) }" @click="alternarMarca(marca.id)">
+            <img v-if="marca.fotografia" class="brand-chip__logo" :src="marca.fotografia" alt="" loading="lazy"
+              @error="usarFallback" />
+            <span v-else class="brand-chip__initial">{{ iniciales(marca.nombre) }}</span>
+            <span>{{ marca.nombre }}</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Filtros -->
+      <div class="filter-bar">
+        <div class="filter-bar__category">
+          <label class="form-label d-block mb-1" for="filtro-categoria">
+            <i class="pi pi-th-large me-1"></i>Categoría
+          </label>
+          <select id="filtro-categoria" v-model="filtroCategoria" class="form-select">
+            <option value="">Todas las categorías ({{ pantallas.length }})</option>
+            <option v-for="categoria in categoriasConConteo" :key="categoria.id" :value="String(categoria.id)">
+              {{ categoria.nombre }} ({{ categoria.total }})
+            </option>
+          </select>
+        </div>
+
+        <div class="filter-bar__search">
+          <label class="form-label d-block mb-1" for="filtro-busqueda">Buscar pantalla</label>
+          <div class="position-relative">
+            <i class="pi pi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"
+              style="font-size: 0.85rem"></i>
+            <input id="filtro-busqueda" v-model="busqueda" class="form-control ps-5" type="search"
+              placeholder="Modelo, marca, SKU o categoría…" />
           </div>
         </div>
+
+        <div>
+          <label class="form-label d-block mb-1" for="filtro-calidad">Calidad</label>
+          <select id="filtro-calidad" v-model="filtroCalidad" class="form-select" style="min-width: 9rem">
+            <option value="">Todas las calidades</option>
+            <option v-for="calidad in calidades" :key="calidad.id" :value="String(calidad.id)">
+              {{ calidad.nombre }}
+            </option>
+          </select>
+        </div>
+
+        <div>
+          <span class="form-label d-block mb-1"><i class="pi pi-check-square me-1"></i>Marco</span>
+          <div class="form-check">
+            <input id="filtro-con-marco" v-model="soloConMarco" class="form-check-input" type="checkbox"
+              :disabled="!marcoDisponible" />
+            <label class="form-check-label" :class="{ 'text-muted': !marcoDisponible }" for="filtro-con-marco">
+              Con marco
+            </label>
+          </div>
+          <small v-if="!marcoDisponible" class="text-muted">Solo para Pantallas</small>
+        </div>
+
+        <div class="align-self-end">
+          <button type="button" class="btn btn-outline-secondary w-100" :disabled="!hayFiltros" @click="limpiarFiltros">
+            <i class="pi pi-filter-slash me-1"></i>Limpiar
+          </button>
+        </div>
       </div>
 
-      <!-- 2. Filtros con Select de Marca, Calidad y Categoría del Repuesto -->
-      <div class="row g-3 mb-4 bg-white p-3 rounded shadow-sm align-items-end">
-        <div class="col-12 col-md-3">
-          <label class="form-label small fw-bold text-secondary mb-1">Buscar Pantalla</label>
-          <InputText v-model="busqueda" placeholder="Modelo, marca o SKU..." class="w-100" />
-        </div>
-        <div class="col-12 col-md-3">
-          <label class="form-label small fw-bold text-secondary mb-1">Marca</label>
-          <Select v-model="idMarcaSeleccionada" :options="marcas" optionLabel="nombre" optionValue="id"
-            placeholder="Todas las Marcas" showClear class="w-100" />
-        </div>
-        <div class="col-12 col-md-3">
-          <label class="form-label small fw-bold text-secondary mb-1">Calidad</label>
-          <Select v-model="idCalidadSeleccionada" :options="calidades" optionLabel="nombre" optionValue="id"
-            placeholder="Todas las Calidades" showClear class="w-100" />
-        </div>
-        <div class="col-12 col-md-3">
-          <label class="form-label small fw-bold text-secondary mb-1">Categoría del Repuesto</label>
-          <Select v-model="idCategoriaSeleccionada" :options="categorias" optionLabel="nombre" optionValue="id"
-            placeholder="Todas las Categorías" showClear class="w-100" />
+      <div class="d-flex flex-wrap align-articulos-center justify-content-between gap-2 mb-3">
+        <p class="m-0 muted small">
+          Mostrando <strong class="text-dark">{{ rangoInicio }}–{{ rangoFin }}</strong> de
+          <strong class="text-dark">{{ pantallasOrdenadas.length }}</strong> productos
+          <span v-if="totalPaginas > 1" class="ms-1">(página {{ paginaActual }} de {{ totalPaginas }})</span>
+          <span v-if="categoriaActiva" class="badge bg-info text-dark ms-1">{{ categoriaActiva }}</span>
+          <span v-if="idAlmacenSesion" class="badge bg-light text-dark border ms-1">
+            <i class="pi pi-building me-1"></i>Stock de {{ nombreAlmacenSesion || 'tu sucursal' }}
+          </span>
+        </p>
+        <div class="d-flex align-articulos-center gap-2">
+          <label class="muted small m-0" for="por-pagina">Por página</label>
+          <select id="por-pagina" v-model.number="porPagina" class="form-select form-select-sm" style="width: auto">
+            <option v-for="opcion in OPCIONES_POR_PAGINA" :key="opcion" :value="opcion">{{ opcion }}</option>
+          </select>
+          <button v-if="carrito.unidades" type="button" class="btn btn-sm btn-outline-primary" @click="carrito.abrir()">
+            <i class="pi pi-shopping-carrito me-1"></i>Ver carrito ({{ carrito.unidades }})
+          </button>
         </div>
       </div>
 
-      <!-- 3. Grilla de Pantallas -->
-      <div class="row g-4 mb-5">
-        <div v-for="item in pantallasFiltradas" :key="item.id" class="col-12 col-sm-6 col-md-4 col-lg-3">
-          <div class="card h-100 border-0 shadow-sm product-card">
-            <div class="position-relative bg-dark text-center">
-              <img :src="item.fotografia" :alt="item.nombre" class="card-img-top"
-                style="height: 220px; object-fit: cover" />
-              <span class="position-absolute top-0 end-0 m-2 badge"
-                :class="obtenerStockTotal(item) > 0 ? 'bg-success' : 'bg-danger'">
-                {{ obtenerStockTotal(item) > 0 ? `Disponible (${obtenerStockTotal(item)})` : 'Agotado' }}
+      <!-- Grilla de productos -->
+      <div v-if="cargando" class="row g-3">
+        <div v-for="n in 12" :key="`skeleton-${n}`" class="col-6 col-md-4 col-lg-3 col-xxl-2">
+          <div class="skeleton-card skeleton-card--compact"></div>
+        </div>
+      </div>
+
+      <div v-else-if="pantallasOrdenadas.length" class="row g-3 product-grid">
+        <div v-for="pantalla in productosPagina" :key="pantalla.id" class="col-6 col-md-4 col-lg-3 col-xxl-2">
+          <article class="product-card product-card--compact">
+            <div class="product-card__media">
+              <img :src="pantalla.fotografia || IMAGEN_FALLBACK" :alt="pantalla.nombre" loading="lazy"
+                @error="usarFallback" />
+              <span class="product-card__tag product-card__tag--left">
+                {{ pantalla.calidad?.nombre || 'Estándar' }}
               </span>
-              <span class="position-absolute top-0 start-0 m-2 badge bg-info text-dark">
-                {{ item.calidad?.nombre }}
+              <span class="product-card__tag product-card__tag--right"
+                :class="stockTotal(pantalla) > 0 ? 'product-card__tag--ok' : 'product-card__tag--out'">
+                {{ stockTotal(pantalla) > 0 ? `${stockTotal(pantalla)} stock` : 'Agotado' }}
               </span>
             </div>
 
-            <div class="card-body d-flex flex-column justify-content-between">
+            <div class="product-card__body">
+              <div class="product-card__meta">
+                {{ pantalla.modelo?.marca?.nombre || 'Genérico' }} · {{ pantalla.modelo?.nombre || 'Universal' }}
+              </div>
+              <h3 class="product-card__title" :title="pantalla.nombre">{{ pantalla.nombre }}</h3>
+
+              <div class="product-card__tags">
+                <span class="mini-tag">{{ pantalla.categoria?.nombre || 'General' }}</span>
+                <span v-if="pantalla.color" class="mini-tag mini-tag--ghost">{{ pantalla.color }}</span>
+                <span class="mini-tag mini-tag--ghost">{{ pantalla.conMarco ? 'Con marco' : 'Sin marco' }}</span>
+              </div>
+
+              <div class="product-card__footer">
+                <div class="price">{{ formatearMoneda(pantalla.precioVenta) }}</div>
+                <button type="button" class="btn btn-primary btn-sm product-card__add"
+                  :disabled="stockTotal(pantalla) <= 0" title="Agregar al carrito"
+                  :aria-label="`Agregar ${pantalla.nombre} al carrito`" @click="agregarAlCarrito(pantalla)">
+                  <i class="pi pi-plus"></i>
+                  <span class="d-none d-sm-inline ms-1">Agregar</span>
+                </button>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <!-- Paginación -->
+      <nav v-if="!cargando && totalPaginas > 1" class="catalog-pagination" aria-label="Paginación del catálogo">
+        <button type="button" class="catalog-pagination__btn" :disabled="paginaActual === 1"
+          aria-label="Primera página" @click="irAPagina(1)">
+          <i class="pi pi-angle-double-left"></i>
+        </button>
+        <button type="button" class="catalog-pagination__btn" :disabled="paginaActual === 1"
+          aria-label="Página anterior" @click="irAPagina(paginaActual - 1)">
+          <i class="pi pi-angle-left"></i>
+        </button>
+
+        <button v-for="pagina in paginasVisibles" :key="`pagina-${pagina}`" type="button"
+          class="catalog-pagination__btn catalog-pagination__btn--num"
+          :class="{ 'is-active': pagina === paginaActual }" :aria-current="pagina === paginaActual ? 'page' : undefined"
+          @click="irAPagina(pagina)">
+          {{ pagina }}
+        </button>
+
+        <button type="button" class="catalog-pagination__btn" :disabled="paginaActual === totalPaginas"
+          aria-label="Página siguiente" @click="irAPagina(paginaActual + 1)">
+          <i class="pi pi-angle-right"></i>
+        </button>
+        <button type="button" class="catalog-pagination__btn" :disabled="paginaActual === totalPaginas"
+          aria-label="Última página" @click="irAPagina(totalPaginas)">
+          <i class="pi pi-angle-double-right"></i>
+        </button>
+      </nav>
+
+      <div v-if="!cargando && !pantallasOrdenadas.length && !errorCarga" class="surface-card empty-state">
+        <div class="empty-state__icon"><i class="pi pi-inbox"></i></div>
+        <h3 class="h5 mb-1">Sin resultados</h3>
+        <p class="mb-3">
+          No encontramos productos con esos filtros. Prueba con otra marca, calidad o categoría.
+        </p>
+        <button type="button" class="btn btn-outline-secondary" @click="limpiarFiltros">
+          Limpiar filtros
+        </button>
+      </div>
+
+      <!-- Contacto y almacenes -->
+      <section class="row g-4 mt-5">
+        <div id="contacto-vendedores" class="col-lg-6">
+          <div class="info-card info-card--accent">
+            <h2 class="h5 fw-bold mb-1">Contacto de vendedores</h2>
+            <p class="small muted mb-2">Atención directa para consultas de stock y pedidos.</p>
+
+            <div v-if="!vendedores.length" class="empty-state py-4">
+              <i class="pi pi-user me-2"></i>No hay vendedores de contacto registrados.
+            </div>
+
+            <div v-for="vendedor in vendedores" :key="vendedor.id" class="contact-row">
               <div>
-                <div class="text-muted small fw-bold text-uppercase mb-1">
-                  {{ item.modelo?.marca?.nombre }} - {{ item.modelo?.nombre }}
+                <div class="contact-row__name">
+                  {{ vendedor.nombreUsuario }}
+                  <span class="badge bg-secondary ms-1">{{ vendedor.rol }}</span>
                 </div>
-                <h5 class="card-title fw-bold text-dark mb-2">{{ item.nombre }}</h5>
-                <p class="card-text small text-secondary mb-2">
-                  <strong>Categoría:</strong> {{ item.categoria?.nombre || 'General' }} <br />
-                  <strong>SKU:</strong> {{ item.codigo }} <br />
-                  <strong>Color:</strong> {{ item.color }} |
-                  <strong>{{ item.conMarco ? 'Con Marco' : 'Sin Marco' }}</strong>
-                </p>
+                <div class="small text-secondary">
+                  <i class="pi pi-phone me-1"></i>{{ vendedor.telefono || 'Teléfono no registrado' }}
+                </div>
+                <div class="small text-secondary">
+                  <i class="pi pi-envelope me-1"></i>{{ vendedor.correo }}
+                </div>
               </div>
 
-              <div class="d-flex align-items-center justify-content-between pt-3 border-top mt-2">
-                <span class="fs-5 fw-bold text-primary">Bs. {{ item.precioVenta }}</span>
-                <Button type="button" label="Agregar al Carrito" size="small" :disabled="obtenerStockTotal(item) <= 0"
-                  @click="agregarAlCarrito(item)" />
+              <div class="d-flex gap-2">
+                <a v-if="vendedor.telefono" class="btn btn-sm btn-success"
+                  :href="`https://wa.me/591${vendedor.telefono.replace(/\D/g, '')}`" target="_blank"
+                  rel="noopener noreferrer">
+                  <i class="pi pi-whatsapp me-1"></i>WhatsApp
+                </a>
+                <a class="btn btn-sm btn-outline-primary"
+                  :href="`mailto:${vendedor.correo}?subject=Consulta%20Catálogo%20Nexus%20Display`">
+                  <i class="pi pi-envelope me-1"></i>Correo
+                </a>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- 4. Contacto del Vendedor y Direcciones de Almacenes -->
-      <section id="contacto-vendedores" class="bg-white p-4 rounded shadow-sm border-top border-4 border-info mt-5">
-        <div class="row g-4">
-          <div class="col-12 col-md-6">
-            <h4 class="fw-bold text-dark mb-3">Contacto de Vendedores</h4>
-            <p class="text-secondary small">
-              Números de teléfono y correos electrónicos de atención:
-            </p>
-            <ul class="list-group list-group-flush">
-              <li v-for="v in vendedoresContacto" :key="v.id"
-                class="list-group-item d-flex justify-content-between align-items-center px-0 flex-wrap gap-2">
-                <div>
-                  <strong class="text-dark">{{ v.nombreUsuario }}</strong>
-                  <span class="badge bg-secondary ms-2">{{ v.rol }}</span>
-                  <div class="small text-dark mt-1">
-                    <strong>Teléfono / Celular:</strong> {{ v.telefono || 'No registrado' }}
-                  </div>
-                  <div class="small text-muted">
-                    <strong>Correo:</strong> {{ v.correo }}
-                  </div>
-                </div>
-                <div class="d-flex gap-2">
-                  <a v-if="v.telefono" :href="`https://wa.me/591${v.telefono.replace(/\D/g, '')}`" target="_blank"
-                    class="btn btn-sm btn-success">
-                    WhatsApp
-                  </a>
-                  <a :href="`mailto:${v.correo}?subject=Consulta%20Catálogo%20Nexus%20Display`"
-                    class="btn btn-sm btn-outline-primary">
-                    Enviar Correo
-                  </a>
-                </div>
-              </li>
-            </ul>
-          </div>
+        <div id="direcciones-almacenes" class="col-lg-6">
+          <div class="info-card">
+            <h2 class="h5 fw-bold mb-1">Direcciones de almacenes</h2>
+            <p class="small muted mb-3">Sucursales disponibles para el retiro de tus compras.</p>
 
-          <div class="col-12 col-md-6">
-            <h4 class="fw-bold text-dark mb-3">Dirección de Almacenes</h4>
-            <div class="row g-3">
-              <div v-for="alm in almacenes" :key="alm.id" class="col-12">
-                <div class="p-3 bg-light rounded border">
-                  <div class="fw-bold text-dark">{{ alm.nombre }}</div>
-                  <div class="small text-secondary mt-1">
-                    <strong>Dirección:</strong> {{ alm.direccion }}
-                  </div>
+            <div v-if="!almacenes.length" class="empty-state py-4">
+              <i class="pi pi-building me-2"></i>No hay almacenes registrados.
+            </div>
+
+            <div class="d-flex flex-column gap-2">
+              <div v-for="almacen in almacenes" :key="almacen.id" class="warehouse-articulo">
+                <div class="warehouse-item__name">{{ almacen.nombre }}</div>
+                <div class="warehouse-item__address">
+                  <i class="pi pi-map-marker me-1"></i>{{ almacen.direccion }}
+                  <template v-if="almacen.telefono">
+                    · <i class="pi pi-phone me-1"></i>{{ almacen.telefono }}
+                  </template>
                 </div>
               </div>
             </div>
+
+            <p v-if="!sesion.estaAutenticado" class="small muted mt-3 mb-0">
+              <RouterLink to="/registro" class="fw-semibold">Regístrate como usuario nuevo</RouterLink>
+              o <RouterLink to="/login" class="fw-semibold">inicia sesión</RouterLink>
+              para pagar y elegir tu sucursal de retiro.
+            </p>
           </div>
         </div>
       </section>
     </div>
-
-    <!-- Modal del Carrito de Compras del Cliente -->
-    <Dialog v-model:visible="mostrarCarrito" header="Mi Carrito de Compras" :style="{ width: '38rem' }" modal>
-      <div v-if="carrito.length === 0" class="text-center py-4">
-        Tu carrito está vacío. Selecciona una pantalla del catálogo para comprar.
-      </div>
-      <div v-else class="d-flex flex-column gap-3 pt-2">
-        <div>
-          <label class="fw-semibold d-block mb-1 small">Sucursal / Almacén de Retiro</label>
-          <Select v-model="idAlmacenSeleccionado" :options="almacenes" optionLabel="nombre" optionValue="id"
-            placeholder="Seleccione almacén" class="w-100" />
-        </div>
-
-        <div class="row g-2">
-          <div class="col-12 col-md-7">
-            <label class="fw-semibold d-block mb-1 small">Nombre o Razón Social</label>
-            <InputText v-model="nombreCliente" placeholder="Tu nombre o razón social" class="w-100" />
-          </div>
-          <div class="col-12 col-md-5">
-            <label class="fw-semibold d-block mb-1 small">NIT / CI</label>
-            <InputText v-model="documentoCliente" placeholder="NIT o CI" class="w-100" />
-          </div>
-        </div>
-
-        <div class="border rounded p-2">
-          <div v-for="(item, idx) in carrito" :key="item.pantalla.id"
-            class="d-flex align-items-center justify-content-between border-bottom py-2 gap-2">
-            <img :src="item.pantalla.fotografia"
-              style="width: 48px; height: 48px; object-fit: cover; border-radius: 6px" />
-            <div class="flex-grow-1">
-              <div class="fw-bold small">{{ item.pantalla.nombre }}</div>
-              <div class="text-muted small">Bs. {{ item.pantalla.precioVenta }} c/u</div>
-            </div>
-
-            <div class="d-flex align-items-center gap-1">
-              <Button type="button" label="-" size="small" severity="secondary"
-                @click="cambiarCantidadCarrito(idx, -1)" />
-              <span class="px-2 fw-bold">{{ item.cantidad }}</span>
-              <Button type="button" label="+" size="small" severity="info" @click="cambiarCantidadCarrito(idx, 1)" />
-            </div>
-
-            <div class="fw-bold text-end" style="min-width: 85px">
-              Bs. {{ (item.cantidad * Number(item.pantalla.precioVenta)).toFixed(2) }}
-            </div>
-
-            <Button type="button" label="Quitar" severity="danger" text size="small"
-              @click="quitarDelCarrito(item.pantalla.id)" />
-          </div>
-        </div>
-
-        <div class="d-flex justify-content-between align-items-center fw-bold fs-5 pt-2">
-          <span>Total a Pagar:</span>
-          <span class="text-info">Bs. {{ totalCarrito.toFixed(2) }}</span>
-        </div>
-
-        <div class="d-flex justify-content-end gap-2 mt-2">
-          <Button type="button" label="Seguir Viendo" severity="secondary" @click="mostrarCarrito = false" />
-          <Button type="button" label="Confirmar Compra" @click="confirmarCompra" />
-        </div>
-      </div>
-    </Dialog>
   </div>
 </template>
 
 <style scoped>
-.hero-banner {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  border-bottom: 4px solid #06b6d4;
+/* Barra de paginación del catálogo: botones chicos y cuadrados, alineados al centro. */
+.catalog-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-articulos: center;
+  justify-content: center;
+  gap: 0.35rem;
+  margin-top: 1.8rem;
 }
 
-.product-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+.catalog-pagination__btn {
+  display: grid;
+  place-articulos: center;
+  min-width: 38px;
+  height: 38px;
+  padding: 0 0.55rem;
+  border: 1px solid var(--nexus-border);
+  border-radius: 10px;
+  background-color: var(--nexus-surface);
+  color: var(--nexus-text);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
-.product-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12) !important;
+.catalog-pagination__btn:hover:not(:disabled) {
+  border-color: var(--nexus-accent);
+  background-color: var(--nexus-accent-soft);
+  color: var(--nexus-accent-strong);
+}
+
+.catalog-pagination__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.catalog-pagination__btn.is-active {
+  border-color: var(--nexus-accent-strong);
+  background-color: var(--nexus-accent-strong);
+  color: #fff;
+}
+
+@media (max-width: 575.98px) {
+  .catalog-pagination__btn {
+    min-width: 34px;
+    height: 34px;
+  }
 }
 </style>

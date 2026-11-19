@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseIntPipe, Req } from '@nestjs/common';
 import { InventarioAlmacenService } from './inventario-almacen.service';
 import { CreateInventarioAlmacenDto } from './dto/create-inventario-almacen.dto';
 import { UpdateInventarioAlmacenDto } from './dto/update-inventario-almacen.dto';
@@ -18,36 +18,39 @@ export class InventarioAlmacenController {
   @ApiBearerAuth()
   @Roles(RolNombre.ADMIN)
   @Post()
-  create(@Body() createInventarioAlmacenDto: CreateInventarioAlmacenDto) {
-    return this.inventarioAlmacenService.create(createInventarioAlmacenDto);
+  crear(@Body() datosInventarioAlmacen: CreateInventarioAlmacenDto) {
+    return this.inventarioAlmacenService.crear(datosInventarioAlmacen);
   }
 
-  @AuthPublic()
+  // Antes esta ruta era pública; ahora el vendedor entra con su token para que
+  // el backend le devuelva solo el inventario de su sucursal.
+  @ApiBearerAuth()
+  @Roles(RolNombre.ADMIN, RolNombre.VENDEDOR)
   @Get()
-  findAll() {
-    return this.inventarioAlmacenService.findAll();
+  listar(@Req() req: any) {
+    return this.inventarioAlmacenService.listar(req.user);
   }
 
   @AuthPublic()
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.inventarioAlmacenService.findOne(id);
+  obtenerPorId(@Param('id', ParseIntPipe) id: number) {
+    return this.inventarioAlmacenService.obtenerPorId(id);
   }
 
   @ApiBearerAuth()
   @Roles(RolNombre.ADMIN)
   @Patch(':id')
-  update(
+  actualizar(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateInventarioAlmacenDto: UpdateInventarioAlmacenDto,
+    @Body() datosInventarioAlmacen: UpdateInventarioAlmacenDto,
   ) {
-    return this.inventarioAlmacenService.update(id, updateInventarioAlmacenDto);
+    return this.inventarioAlmacenService.actualizar(id, datosInventarioAlmacen);
   }
 
   @ApiBearerAuth()
   @Roles(RolNombre.ADMIN)
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.inventarioAlmacenService.remove(id);
+  eliminar(@Param('id', ParseIntPipe) id: number) {
+    return this.inventarioAlmacenService.eliminar(id);
   }
 }

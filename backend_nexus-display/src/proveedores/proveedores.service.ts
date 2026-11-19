@@ -7,37 +7,37 @@ import { Repository } from 'typeorm';
 
 @Injectable()
 export class ProveedoresService {
-  constructor(@InjectRepository(Proveedor) private proveedoresRepository: Repository<Proveedor>) {}
+  constructor(@InjectRepository(Proveedor) private repositorioProveedores: Repository<Proveedor>) {}
 
-  async create(createProveedorDto: CreateProveedorDto): Promise<Proveedor> {
-    let proveedor = await this.proveedoresRepository.findOneBy({
-      nit: createProveedorDto.nit,
+  async crear(datosProveedor: CreateProveedorDto): Promise<Proveedor> {
+    let proveedor = await this.repositorioProveedores.findOneBy({
+      nit: datosProveedor.nit,
     });
     if (proveedor) throw new ConflictException('El proveedor ya existe');
 
     proveedor = new Proveedor();
-    Object.assign(proveedor, createProveedorDto);
-    return this.proveedoresRepository.save(proveedor);
+    Object.assign(proveedor, datosProveedor);
+    return this.repositorioProveedores.save(proveedor);
   }
 
-  async findAll(): Promise<Proveedor[]> {
-    return this.proveedoresRepository.find();
+  async listar(): Promise<Proveedor[]> {
+    return this.repositorioProveedores.find();
   }
 
-  async findOne(id: number): Promise<Proveedor> {
-    const proveedor = await this.proveedoresRepository.findOneBy({ id });
+  async obtenerPorId(id: number): Promise<Proveedor> {
+    const proveedor = await this.repositorioProveedores.findOneBy({ id });
     if (!proveedor) throw new NotFoundException('El proveedor no existe');
     return proveedor;
   }
 
-  async update(id: number, updateProveedorDto: UpdateProveedorDto): Promise<Proveedor> {
-    const proveedor = await this.findOne(id);
-    Object.assign(proveedor, updateProveedorDto);
-    return this.proveedoresRepository.save(proveedor);
+  async actualizar(id: number, datosProveedor: UpdateProveedorDto): Promise<Proveedor> {
+    const proveedor = await this.obtenerPorId(id);
+    Object.assign(proveedor, datosProveedor);
+    return this.repositorioProveedores.save(proveedor);
   }
 
-  async remove(id: number): Promise<Proveedor> {
-    const proveedor = await this.findOne(id);
-    return this.proveedoresRepository.softRemove(proveedor);
+  async eliminar(id: number): Promise<Proveedor> {
+    const proveedor = await this.obtenerPorId(id);
+    return this.repositorioProveedores.softRemove(proveedor);
   }
 }

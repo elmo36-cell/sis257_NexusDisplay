@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import type { Almacen } from '@/models/almacen'
-import http from '@/plugins/axios'
+import clienteApi from '@/plugins/axios'
+import { mensajeDeError, notify } from '@/helpers/notificaciones'
 import { Button, Dialog, InputText } from 'primevue'
 import { computed, ref, watch } from 'vue'
 
-const ENDPOINT = 'almacenes'
+const RUTA_API = 'almacenes'
 const props = defineProps({
   mostrar: Boolean,
   almacen: {
@@ -15,7 +16,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['guardar', 'close'])
 
-const dialogVisible = computed({
+const dialogoVisible = computed({
   get: () => props.mostrar,
   set: (value) => {
     if (!value) emit('close')
@@ -25,34 +26,35 @@ const dialogVisible = computed({
 const almacen = ref<Almacen>({ ...props.almacen })
 watch(
   () => props.almacen,
-  (newVal) => {
-    almacen.value = { ...newVal }
+  (nuevoValor) => {
+    almacen.value = { ...nuevoValor }
   },
 )
 
-async function handleSave() {
+async function guardarCambios() {
   try {
-    const body = {
+    const cuerpo = {
       nombre: almacen.value.nombre,
       direccion: almacen.value.direccion,
       telefono: almacen.value.telefono,
     }
     if (props.modoEdicion) {
-      await http.patch(`${ENDPOINT}/${almacen.value.id}`, body)
+      await clienteApi.patch(`${RUTA_API}/${almacen.value.id}`, cuerpo)
     } else {
-      await http.post(ENDPOINT, body)
+      await clienteApi.post(RUTA_API, cuerpo)
     }
     emit('guardar')
     almacen.value = {} as Almacen
-    dialogVisible.value = false
-  } catch (error: any) {
-    alert(error?.response?.data?.message || 'Error al guardar almacén')
+    dialogoVisible.value = false
+    notify.success('Almacén guardado correctamente')
+  } catch (error) {
+    notify.error(mensajeDeError(error, 'Error al guardar el almacén'))
   }
 }
 </script>
 
 <template>
-  <Dialog v-model:visible="dialogVisible" :header="props.modoEdicion ? 'Editar Almacén' : 'Crear Almacén'"
+  <Dialog v-model:visible="dialogoVisible" :header="props.modoEdicion ? 'Editar Almacén' : 'Crear Almacén'"
     style="width: 25rem" modal>
     <div class="flex flex-column gap-3">
       <div>
@@ -68,8 +70,8 @@ async function handleSave() {
         <InputText v-model="almacen.telefono" class="w-full" />
       </div>
       <div class="flex justify-end gap-2">
-        <Button type="button" label="Cancelar" icon="pi pi-times" severity="secondary" @click="dialogVisible = false" />
-        <Button type="button" label="Guardar" icon="pi pi-save" @click="handleSave" />
+        <Button type="button" label="Cancelar" icon="pi pi-times" severity="secondary" @click="dialogoVisible = false" />
+        <Button type="button" label="Guardar" icon="pi pi-save" @click="guardarCambios" />
       </div>
     </div>
   </Dialog>

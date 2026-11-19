@@ -13,41 +13,41 @@ import { Categoria } from './entities/categoria.entity';
 export class CategoriasService {
   constructor(
     @InjectRepository(Categoria)
-    private categoriasRepository: Repository<Categoria>,
+    private repositorioCategorias: Repository<Categoria>,
   ) {}
 
-  async create(createCategoriaDto: CreateCategoriaDto): Promise<Categoria> {
-    let categoria = await this.categoriasRepository.findOneBy({
-      nombre: createCategoriaDto.nombre,
+  async crear(datosCategoria: CreateCategoriaDto): Promise<Categoria> {
+    let categoria = await this.repositorioCategorias.findOneBy({
+      nombre: datosCategoria.nombre,
     });
     if (categoria) throw new ConflictException('La categoría ya existe');
 
     categoria = new Categoria();
-    Object.assign(categoria, createCategoriaDto);
-    return this.categoriasRepository.save(categoria);
+    Object.assign(categoria, datosCategoria);
+    return this.repositorioCategorias.save(categoria);
   }
 
-  async findAll(): Promise<Categoria[]> {
-    return this.categoriasRepository.find();
+  async listar(): Promise<Categoria[]> {
+    return this.repositorioCategorias.find();
   }
 
-  async findOne(id: number): Promise<Categoria> {
-    const categoria = await this.categoriasRepository.findOneBy({ id });
+  async obtenerPorId(id: number): Promise<Categoria> {
+    const categoria = await this.repositorioCategorias.findOneBy({ id });
     if (!categoria) throw new NotFoundException('La categoría no existe');
     return categoria;
   }
 
-  async update(
+  async actualizar(
     id: number,
-    updateCategoriaDto: UpdateCategoriaDto,
+    datosCategoria: UpdateCategoriaDto,
   ): Promise<Categoria> {
-    const categoria = await this.findOne(id);
-    Object.assign(categoria, updateCategoriaDto);
-    return this.categoriasRepository.save(categoria);
+    const categoria = await this.obtenerPorId(id);
+    Object.assign(categoria, datosCategoria);
+    return this.repositorioCategorias.save(categoria);
   }
 
-  async remove(id: number): Promise<Categoria> {
-    const categoria = await this.findOne(id);
-    return this.categoriasRepository.softRemove(categoria);
+  async eliminar(id: number): Promise<Categoria> {
+    const categoria = await this.obtenerPorId(id);
+    return this.repositorioCategorias.softRemove(categoria);
   }
 }

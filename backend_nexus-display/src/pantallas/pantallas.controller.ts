@@ -18,33 +18,33 @@ export class PantallasController {
   @ApiBearerAuth()
   @Roles(RolNombre.ADMIN)
   @Post()
-  create(@Body() createPantallaDto: CreatePantallaDto) {
-    return this.pantallasService.create(createPantallaDto);
+  crear(@Body() datosPantalla: CreatePantallaDto) {
+    return this.pantallasService.crear(datosPantalla);
   }
 
   @AuthPublic()
   @Get()
-  findAll() {
-    return this.pantallasService.findAll();
+  listar() {
+    return this.pantallasService.listar();
   }
 
   @AuthPublic()
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.pantallasService.findOne(id);
+  obtenerPorId(@Param('id', ParseIntPipe) id: number) {
+    return this.pantallasService.obtenerPorId(id);
   }
 
   @ApiBearerAuth()
   @Roles(RolNombre.ADMIN)
   @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() updatePantallaDto: UpdatePantallaDto) {
-    return this.pantallasService.update(id, updatePantallaDto);
+  actualizar(@Param('id', ParseIntPipe) id: number, @Body() datosPantalla: UpdatePantallaDto) {
+    return this.pantallasService.actualizar(id, datosPantalla);
   }
 
   @ApiBearerAuth()
   @Roles(RolNombre.ADMIN)
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.pantallasService.remove(id);
+  eliminar(@Param('id', ParseIntPipe) id: number) {
+    return this.pantallasService.eliminar(id);
   }
 }

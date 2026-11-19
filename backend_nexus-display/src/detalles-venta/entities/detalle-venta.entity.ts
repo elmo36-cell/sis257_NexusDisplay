@@ -22,6 +22,9 @@ export class DetalleVenta {
   @Column('int', { name: 'id_pantalla' })
   idPantalla: number;
 
+  @Column('int', { name: 'cantidad', default: 1 })
+  cantidad: number;
+
   @Column('decimal', {
     name: 'precio_unitario',
     precision: 10,
@@ -53,5 +56,4 @@ export class DetalleVenta {
   @ManyToOne(() => Pantalla, (pantalla) => pantalla.detallesVenta)
   @JoinColumn({ name: 'id_pantalla', referencedColumnName: 'id' })
   pantalla: Pantalla;
-  cantidad: number;
 }

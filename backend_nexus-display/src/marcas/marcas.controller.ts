@@ -28,33 +28,33 @@ export class MarcasController {
   @ApiBearerAuth()
   @Roles(RolNombre.ADMIN)
   @Post()
-  create(@Body() createMarcaDto: CreateMarcaDto) {
-    return this.marcasService.create(createMarcaDto);
+  crear(@Body() datosMarca: CreateMarcaDto) {
+    return this.marcasService.crear(datosMarca);
   }
 
   @AuthPublic()
   @Get()
-  findAll() {
-    return this.marcasService.findAll();
+  listar() {
+    return this.marcasService.listar();
   }
 
   @AuthPublic()
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.marcasService.findOne(id);
+  obtenerPorId(@Param('id', ParseIntPipe) id: number) {
+    return this.marcasService.obtenerPorId(id);
   }
 
   @ApiBearerAuth()
   @Roles(RolNombre.ADMIN)
   @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() updateMarcaDto: UpdateMarcaDto) {
-    return this.marcasService.update(id, updateMarcaDto);
+  actualizar(@Param('id', ParseIntPipe) id: number, @Body() datosMarca: UpdateMarcaDto) {
+    return this.marcasService.actualizar(id, datosMarca);
   }
 
   @ApiBearerAuth()
   @Roles(RolNombre.ADMIN)
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.marcasService.remove(id);
+  eliminar(@Param('id', ParseIntPipe) id: number) {
+    return this.marcasService.eliminar(id);
   }
 }

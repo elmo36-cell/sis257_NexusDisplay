@@ -12,41 +12,41 @@ import { Repository } from 'typeorm';
 @Injectable()
 export class CalidadesService {
   constructor(
-    @InjectRepository(Calidad) private calidadesRepository: Repository<Calidad>,
+    @InjectRepository(Calidad) private repositorioCalidades: Repository<Calidad>,
   ) {}
 
-  async create(createCalidadDto: CreateCalidadDto): Promise<Calidad> {
-    let calidad = await this.calidadesRepository.findOneBy({
-      nombre: createCalidadDto.nombre,
+  async crear(datosCalidad: CreateCalidadDto): Promise<Calidad> {
+    let calidad = await this.repositorioCalidades.findOneBy({
+      nombre: datosCalidad.nombre,
     });
     if (calidad) throw new ConflictException('La calidad ya existe');
 
     calidad = new Calidad();
-    Object.assign(calidad, createCalidadDto);
-    return this.calidadesRepository.save(calidad);
+    Object.assign(calidad, datosCalidad);
+    return this.repositorioCalidades.save(calidad);
   }
 
-  async findAll(): Promise<Calidad[]> {
-    return this.calidadesRepository.find();
+  async listar(): Promise<Calidad[]> {
+    return this.repositorioCalidades.find();
   }
 
-  async findOne(id: number): Promise<Calidad> {
-    const calidad = await this.calidadesRepository.findOneBy({ id });
+  async obtenerPorId(id: number): Promise<Calidad> {
+    const calidad = await this.repositorioCalidades.findOneBy({ id });
     if (!calidad) throw new NotFoundException('La calidad no existe');
     return calidad;
   }
 
-  async update(
+  async actualizar(
     id: number,
-    updateCalidadDto: UpdateCalidadDto,
+    datosCalidad: UpdateCalidadDto,
   ): Promise<Calidad> {
-    const calidad = await this.findOne(id);
-    Object.assign(calidad, updateCalidadDto);
-    return this.calidadesRepository.save(calidad);
+    const calidad = await this.obtenerPorId(id);
+    Object.assign(calidad, datosCalidad);
+    return this.repositorioCalidades.save(calidad);
   }
 
-  async remove(id: number): Promise<Calidad> {
-    const calidad = await this.findOne(id);
-    return this.calidadesRepository.softRemove(calidad);
+  async eliminar(id: number): Promise<Calidad> {
+    const calidad = await this.obtenerPorId(id);
+    return this.repositorioCalidades.softRemove(calidad);
   }
 }

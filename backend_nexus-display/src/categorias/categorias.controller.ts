@@ -28,36 +28,36 @@ export class CategoriasController {
   @ApiBearerAuth()
   @Roles(RolNombre.ADMIN)
   @Post()
-  create(@Body() createCategoriaDto: CreateCategoriaDto) {
-    return this.categoriasService.create(createCategoriaDto);
+  crear(@Body() datosCategoria: CreateCategoriaDto) {
+    return this.categoriasService.crear(datosCategoria);
   }
 
   @AuthPublic()
   @Get()
-  findAll() {
-    return this.categoriasService.findAll();
+  listar() {
+    return this.categoriasService.listar();
   }
 
   @AuthPublic()
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.categoriasService.findOne(id);
+  obtenerPorId(@Param('id', ParseIntPipe) id: number) {
+    return this.categoriasService.obtenerPorId(id);
   }
 
   @ApiBearerAuth()
   @Roles(RolNombre.ADMIN)
   @Patch(':id')
-  update(
+  actualizar(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateCategoriaDto: UpdateCategoriaDto,
+    @Body() datosCategoria: UpdateCategoriaDto,
   ) {
-    return this.categoriasService.update(id, updateCategoriaDto);
+    return this.categoriasService.actualizar(id, datosCategoria);
   }
 
   @ApiBearerAuth()
   @Roles(RolNombre.ADMIN)
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.categoriasService.remove(id);
+  eliminar(@Param('id', ParseIntPipe) id: number) {
+    return this.categoriasService.eliminar(id);
   }
 }

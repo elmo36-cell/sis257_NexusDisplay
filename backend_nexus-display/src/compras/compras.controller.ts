@@ -27,34 +27,34 @@ export class ComprasController {
 
   @Roles(RolNombre.ADMIN)
   @Post()
-  create(@Body() createCompraDto: CreateCompraDto) {
-    return this.comprasService.create(createCompraDto);
+  crear(@Body() datosCompra: CreateCompraDto) {
+    return this.comprasService.crear(datosCompra);
   }
 
   @Roles(RolNombre.ADMIN)
   @Get()
-  findAll() {
-    return this.comprasService.findAll();
+  listar() {
+    return this.comprasService.listar();
   }
 
   @Roles(RolNombre.ADMIN)
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.comprasService.findOne(id);
+  obtenerPorId(@Param('id', ParseIntPipe) id: number) {
+    return this.comprasService.obtenerPorId(id);
   }
 
   @Roles(RolNombre.ADMIN)
   @Patch(':id')
-  update(
+  actualizar(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateCompraDto: UpdateCompraDto,
+    @Body() datosCompra: UpdateCompraDto,
   ) {
-    return this.comprasService.update(id, updateCompraDto);
+    return this.comprasService.actualizar(id, datosCompra);
   }
 
   @Roles(RolNombre.ADMIN)
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.comprasService.remove(id);
+  eliminar(@Param('id', ParseIntPipe) id: number) {
+    return this.comprasService.eliminar(id);
   }
 }

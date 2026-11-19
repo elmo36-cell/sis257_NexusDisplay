@@ -17,42 +17,46 @@ export class UsuariosController {
 
   @AuthPublic()
   @Get('contactos-vendedores')
-  findVendedoresContacto() {
-    return this.usuariosService.findVendedoresContacto();
+  obtenerContactosVendedores() {
+    return this.usuariosService.obtenerContactosVendedores();
   }
 
   @ApiBearerAuth()
   @Roles(RolNombre.ADMIN, RolNombre.VENDEDOR)
   @Post()
-  create(@Body() createUsuarioDto: CreateUsuarioDto, @Req() req: any) {
-    return this.usuariosService.create(createUsuarioDto, req.user?.rol);
+  crear(@Body() datosUsuario: CreateUsuarioDto, @Req() req: any) {
+    return this.usuariosService.crear(
+      datosUsuario,
+      req.user?.rol,
+      req.user?.idAlmacen ?? null,
+    );
   }
 
   @ApiBearerAuth()
   @Roles(RolNombre.ADMIN, RolNombre.VENDEDOR)
   @Get()
-  findAll(@Req() req: any) {
-    return this.usuariosService.findAll(req.user?.rol);
+  listar(@Req() req: any) {
+    return this.usuariosService.listar(req.user?.rol);
   }
 
   @ApiBearerAuth()
   @Roles(RolNombre.ADMIN, RolNombre.VENDEDOR)
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.usuariosService.findOne(id);
+  obtenerPorId(@Param('id', ParseIntPipe) id: number) {
+    return this.usuariosService.obtenerPorId(id);
   }
 
   @ApiBearerAuth()
   @Roles(RolNombre.ADMIN)
   @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() updateUsuarioDto: UpdateUsuarioDto) {
-    return this.usuariosService.update(id, updateUsuarioDto);
+  actualizar(@Param('id', ParseIntPipe) id: number, @Body() datosUsuario: UpdateUsuarioDto) {
+    return this.usuariosService.actualizar(id, datosUsuario);
   }
 
   @ApiBearerAuth()
   @Roles(RolNombre.ADMIN)
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.usuariosService.remove(id);
+  eliminar(@Param('id', ParseIntPipe) id: number) {
+    return this.usuariosService.eliminar(id);
   }
 }

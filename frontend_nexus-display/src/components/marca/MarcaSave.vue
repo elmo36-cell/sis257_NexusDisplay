@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import type { Marca } from '@/models/marca'
-import http from '@/plugins/axios'
+import clienteApi from '@/plugins/axios'
+import { mensajeDeError, notify } from '@/helpers/notificaciones'
 import { Button, Dialog, InputText } from 'primevue'
 import { computed, ref, watch } from 'vue'
 
-const ENDPOINT = 'marcas'
+const RUTA_API = 'marcas'
 const props = defineProps({
   mostrar: Boolean,
   marca: {
@@ -15,7 +16,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['guardar', 'close'])
 
-const dialogVisible = computed({
+const dialogoVisible = computed({
   get: () => props.mostrar,
   set: (value) => {
     if (!value) emit('close')
@@ -25,33 +26,34 @@ const dialogVisible = computed({
 const marca = ref<Marca>({ ...props.marca })
 watch(
   () => props.marca,
-  (newVal) => {
-    marca.value = { ...newVal }
+  (nuevoValor) => {
+    marca.value = { ...nuevoValor }
   },
 )
 
-async function handleSave() {
+async function guardarCambios() {
   try {
-    const body = {
+    const cuerpo = {
       nombre: marca.value.nombre,
       fotografia: marca.value.fotografia,
     }
     if (props.modoEdicion) {
-      await http.patch(`${ENDPOINT}/${marca.value.id}`, body)
+      await clienteApi.patch(`${RUTA_API}/${marca.value.id}`, cuerpo)
     } else {
-      await http.post(ENDPOINT, body)
+      await clienteApi.post(RUTA_API, cuerpo)
     }
     emit('guardar')
     marca.value = {} as Marca
-    dialogVisible.value = false
-  } catch (error: any) {
-    alert(error?.response?.data?.message || 'Error al guardar la marca')
+    dialogoVisible.value = false
+    notify.success('Marca guardada correctamente')
+  } catch (error) {
+    notify.error(mensajeDeError(error, 'Error al guardar la marca'))
   }
 }
 </script>
 
 <template>
-  <Dialog v-model:visible="dialogVisible" :header="props.modoEdicion ? 'Editar Marca' : 'Crear Marca'"
+  <Dialog v-model:visible="dialogoVisible" :header="props.modoEdicion ? 'Editar Marca' : 'Crear Marca'"
     style="width: 25rem" modal>
     <div class="flex flex-column gap-3">
       <div>
@@ -63,8 +65,8 @@ async function handleSave() {
         <InputText id="fotografia" v-model="marca.fotografia" class="w-full" autocomplete="off" />
       </div>
       <div class="flex justify-end gap-2">
-        <Button type="button" label="Cancelar" icon="pi pi-times" severity="secondary" @click="dialogVisible = false" />
-        <Button type="button" label="Guardar" icon="pi pi-save" @click="handleSave" />
+        <Button type="button" label="Cancelar" icon="pi pi-times" severity="secondary" @click="dialogoVisible = false" />
+        <Button type="button" label="Guardar" icon="pi pi-save" @click="guardarCambios" />
       </div>
     </div>
   </Dialog>

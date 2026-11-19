@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import type { Calidad } from '@/models/calidad'
-import http from '@/plugins/axios'
+import clienteApi from '@/plugins/axios'
+import { mensajeDeError, notify } from '@/helpers/notificaciones'
 import { Button, Dialog, InputText } from 'primevue'
 import { computed, ref, watch } from 'vue'
 
-const ENDPOINT = 'calidades'
+const RUTA_API = 'calidades'
 const props = defineProps({
   mostrar: Boolean,
   calidad: {
@@ -15,7 +16,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['guardar', 'close'])
 
-const dialogVisible = computed({
+const dialogoVisible = computed({
   get: () => props.mostrar,
   set: (value) => {
     if (!value) emit('close')
@@ -25,33 +26,34 @@ const dialogVisible = computed({
 const calidad = ref<Calidad>({ ...props.calidad })
 watch(
   () => props.calidad,
-  (newVal) => {
-    calidad.value = { ...newVal }
+  (nuevoValor) => {
+    calidad.value = { ...nuevoValor }
   },
 )
 
-async function handleSave() {
+async function guardarCambios() {
   try {
-    const body = {
+    const cuerpo = {
       nombre: calidad.value.nombre,
       descripcion: calidad.value.descripcion,
     }
     if (props.modoEdicion) {
-      await http.patch(`${ENDPOINT}/${calidad.value.id}`, body)
+      await clienteApi.patch(`${RUTA_API}/${calidad.value.id}`, cuerpo)
     } else {
-      await http.post(ENDPOINT, body)
+      await clienteApi.post(RUTA_API, cuerpo)
     }
     emit('guardar')
     calidad.value = {} as Calidad
-    dialogVisible.value = false
-  } catch (error: any) {
-    alert(error?.response?.data?.message || 'Error al guardar calidad')
+    dialogoVisible.value = false
+    notify.success('Calidad guardada correctamente')
+  } catch (error) {
+    notify.error(mensajeDeError(error, 'Error al guardar la calidad'))
   }
 }
 </script>
 
 <template>
-  <Dialog v-model:visible="dialogVisible" :header="props.modoEdicion ? 'Editar Calidad' : 'Crear Calidad'"
+  <Dialog v-model:visible="dialogoVisible" :header="props.modoEdicion ? 'Editar Calidad' : 'Crear Calidad'"
     style="width: 25rem" modal>
     <div class="flex flex-column gap-3">
       <div>
@@ -63,8 +65,8 @@ async function handleSave() {
         <InputText v-model="calidad.descripcion" class="w-full" />
       </div>
       <div class="flex justify-end gap-2">
-        <Button type="button" label="Cancelar" icon="pi pi-times" severity="secondary" @click="dialogVisible = false" />
-        <Button type="button" label="Guardar" icon="pi pi-save" @click="handleSave" />
+        <Button type="button" label="Cancelar" icon="pi pi-times" severity="secondary" @click="dialogoVisible = false" />
+        <Button type="button" label="Guardar" icon="pi pi-save" @click="guardarCambios" />
       </div>
     </div>
   </Dialog>

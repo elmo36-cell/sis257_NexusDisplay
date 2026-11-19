@@ -1,31 +1,43 @@
 <script setup lang="ts">
 import type { DetalleCompra } from '@/models/detalle-compra'
-import http from '@/plugins/axios'
-import { Button, InputText } from 'primevue'
-import { computed, onMounted, ref } from 'vue'
+import DetalleCompraList from '@/components/detalleCompra/DetalleCompraList.vue'
+import DetalleCompraSave from '@/components/detalleCompra/DetalleCompraSave.vue'
+import clienteApi from '@/plugins/axios'
+import { useSesionStore } from '@/stores'
+import { mensajeDeError, notify } from '@/helpers/notificaciones'
+import { Button } from 'primevue'
+import { onMounted, ref } from 'vue'
 
-const ENDPOINT = 'detalles-compra'
+const RUTA_API = 'detalles-compra'
+const sesion = useSesionStore()
 const detalles = ref<DetalleCompra[]>([])
-const busqueda = ref<string>('')
-
-const detallesFiltrados = computed(() => {
-  return detalles.value.filter((d) => {
-    const q = busqueda.value.toLowerCase()
-    return (
-      (d.pantalla?.nombre ?? '').toLowerCase().includes(q) ||
-      (d.pantalla?.codigo ?? '').toLowerCase().includes(q) ||
-      String(d.idCompra ?? d.compra?.id ?? '').includes(q)
-    )
-  })
+const editorVisible = ref(false)
+const detalleSeleccionado = ref<DetalleCompra>({
+  id: 0,
+  idCompra: 0,
+  idPantalla: 0,
+  cantidad: 1,
+  costoUnitario: 0,
+  subtotal: 0,
 })
 
 async function obtenerLista() {
-  detalles.value = await http.get(ENDPOINT).then((response) => response.data)
+  try {
+    const { data } = await clienteApi.get(RUTA_API)
+    detalles.value = Array.isArray(data) ? data : []
+  } catch (error) {
+    notify.error(mensajeDeError(error, 'No se pudo cargar el detalle de compras'))
+  }
 }
 
-onMounted(() => {
-  obtenerLista()
-})
+// El lápiz abre el formulario de detalle en modo edición, para reutilizar el
+// DetalleCompraSave que antes no se usaba en ninguna pantalla.
+function abrirEdicion(detalle: DetalleCompra) {
+  detalleSeleccionado.value = detalle
+  editorVisible.value = true
+}
+
+onMounted(obtenerLista)
 </script>
 
 <template>
@@ -40,50 +52,9 @@ onMounted(() => {
       <Button type="button" label="Actualizar Lista" severity="secondary" @click="obtenerLista" />
     </div>
 
-    <div class="col-12 col-md-6 pl-0 mt-3 mb-3">
-      <InputText v-model="busqueda" type="text" placeholder="Buscar por pantalla, código SKU o Nro. de compra..."
-        class="w-100" />
-    </div>
+    <DetalleCompraList :detalles="detalles" :editable="sesion.esAdmin" @editar="abrirEdicion" />
 
-    <table class="table table-hover align-middle bg-white shadow-sm rounded">
-      <thead class="table-dark">
-        <tr>
-          <th>Nro.</th>
-          <th>Compra #</th>
-          <th>Código SKU</th>
-          <th>Pantalla</th>
-          <th>Cantidad Ingresada</th>
-          <th>Costo Unitario</th>
-          <th>Subtotal</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(det, index) in detallesFiltrados" :key="det.id">
-          <td>{{ index + 1 }}</td>
-          <td class="fw-bold">#{{ det.idCompra || det.compra?.id }}</td>
-          <td>{{ det.pantalla?.codigo || '-' }}</td>
-          <td class="fw-semibold text-dark">{{ det.pantalla?.nombre }}</td>
-          <td>
-            <span class="badge bg-success text-white px-3 py-2 fw-bold">
-              {{ det.cantidad }} {{ Number(det.cantidad) === 1 ? 'unidad' : 'unidades' }}
-            </span>
-          </td>
-          <td>Bs. {{ Number(det.costoUnitario).toFixed(2) }}</td>
-          <td class="fw-bold text-primary">
-            Bs.
-            {{
-              det.subtotal
-                ? Number(det.subtotal).toFixed(2)
-                : (Number(det.cantidad) * Number(det.costoUnitario)).toFixed(2)
-            }}
-          </td>
-        </tr>
-        <tr v-if="detallesFiltrados.length === 0">
-          <td colspan="7" class="text-center py-4">
-            No hay detalles de compra registrados todavía.
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <DetalleCompraSave :mostrar="editorVisible" :detalle-compra="detalleSeleccionado" modo-edicion
+      @guardar="obtenerLista" @close="editorVisible = false" />
   </div>
 </template>

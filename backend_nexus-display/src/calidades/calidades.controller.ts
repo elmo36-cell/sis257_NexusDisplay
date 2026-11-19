@@ -28,36 +28,36 @@ export class CalidadesController {
   @ApiBearerAuth()
   @Roles(RolNombre.ADMIN)
   @Post()
-  create(@Body() createCalidadDto: CreateCalidadDto) {
-    return this.calidadesService.create(createCalidadDto);
+  crear(@Body() datosCalidad: CreateCalidadDto) {
+    return this.calidadesService.crear(datosCalidad);
   }
 
   @AuthPublic()
   @Get()
-  findAll() {
-    return this.calidadesService.findAll();
+  listar() {
+    return this.calidadesService.listar();
   }
 
   @AuthPublic()
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.calidadesService.findOne(id);
+  obtenerPorId(@Param('id', ParseIntPipe) id: number) {
+    return this.calidadesService.obtenerPorId(id);
   }
 
   @ApiBearerAuth()
   @Roles(RolNombre.ADMIN)
   @Patch(':id')
-  update(
+  actualizar(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateCalidadDto: UpdateCalidadDto,
+    @Body() datosCalidad: UpdateCalidadDto,
   ) {
-    return this.calidadesService.update(id, updateCalidadDto);
+    return this.calidadesService.actualizar(id, datosCalidad);
   }
 
   @ApiBearerAuth()
   @Roles(RolNombre.ADMIN)
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.calidadesService.remove(id);
+  eliminar(@Param('id', ParseIntPipe) id: number) {
+    return this.calidadesService.eliminar(id);
   }
 }

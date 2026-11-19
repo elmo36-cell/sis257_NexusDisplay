@@ -12,6 +12,12 @@ import { RolNombre } from '../../usuarios/enums/rol-nombre.enum';
 export class RolesGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
+  /**
+   * Revisa si el usuario puede entrar a la ruta según los roles que pide el
+   * decorador @Roles. Si la ruta no pide roles, deja pasar a cualquiera que ya
+   * tenga token. Al admin lo dejo pasar siempre porque es el que más permisos
+   * tiene, y si el rol no está en la lista devuelvo un error 403.
+   */
   canActivate(context: ExecutionContext): boolean {
     const rolesRequeridos = this.reflector.getAllAndOverride<RolNombre[]>(
       ROLES_KEY,

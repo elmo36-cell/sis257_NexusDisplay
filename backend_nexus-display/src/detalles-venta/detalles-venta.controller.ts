@@ -27,34 +27,34 @@ export class DetallesVentaController {
 
   @Roles(RolNombre.ADMIN, RolNombre.VENDEDOR)
   @Post()
-  create(@Body() createDetalleVentaDto: CreateDetalleVentaDto) {
-    return this.detallesVentaService.create(createDetalleVentaDto);
+  crear(@Body() datosDetalleVenta: CreateDetalleVentaDto) {
+    return this.detallesVentaService.crear(datosDetalleVenta);
   }
 
   @Roles(RolNombre.ADMIN, RolNombre.VENDEDOR)
   @Get()
-  findAll() {
-    return this.detallesVentaService.findAll();
+  listar() {
+    return this.detallesVentaService.listar();
   }
 
   @Roles(RolNombre.ADMIN, RolNombre.VENDEDOR)
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.detallesVentaService.findOne(id);
+  obtenerPorId(@Param('id', ParseIntPipe) id: number) {
+    return this.detallesVentaService.obtenerPorId(id);
   }
 
   @Roles(RolNombre.ADMIN)
   @Patch(':id')
-  update(
+  actualizar(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateDetalleVentaDto: UpdateDetalleVentaDto,
+    @Body() datosDetalleVenta: UpdateDetalleVentaDto,
   ) {
-    return this.detallesVentaService.update(id, updateDetalleVentaDto);
+    return this.detallesVentaService.actualizar(id, datosDetalleVenta);
   }
 
   @Roles(RolNombre.ADMIN)
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.detallesVentaService.remove(id);
+  eliminar(@Param('id', ParseIntPipe) id: number) {
+    return this.detallesVentaService.eliminar(id);
   }
 }

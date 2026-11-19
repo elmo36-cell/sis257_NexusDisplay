@@ -2,11 +2,11 @@
 import InventarioList from '@/components/inventarioAlmacen/InventarioAlmacenList.vue'
 import InventarioSave from '@/components/inventarioAlmacen/InventarioAlmacenSave.vue'
 import type { InventarioAlmacen } from '@/models/inventario-almacen'
-import { useAuthStore } from '@/stores'
+import { useSesionStore } from '@/stores'
 import Button from 'primevue/button'
 import { ref } from 'vue'
 
-const authStore = useAuthStore()
+const sesion = useSesionStore()
 const mostrarDialog = ref(false)
 const inventarioListRef = ref<typeof InventarioList | null>(null)
 const inventarioEdit = ref<InventarioAlmacen | undefined>(undefined)
@@ -32,15 +32,16 @@ function handleGuardar() {
 
 <template>
   <div class="container mx-auto p-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex justify-content-between align-articulos-center mb-3">
       <div>
         <h2 class="m-0">Inventario por Almacén</h2>
         <p class="text-muted small m-0 mt-1">
           Consulta y asigna la cantidad de pantallas disponibles en cada sucursal.
         </p>
       </div>
-      <Button v-if="authStore.rol === 'ADMIN' || authStore.rol === 'VENDEDOR'" type="button" label="Asignar Stock"
-        @click="handleCreate" />
+      <!-- El vendedor solo consulta el stock de su sucursal: asignar o ajustar
+           cantidades queda como tarea del administrador. -->
+      <Button v-if="sesion.esAdmin" type="button" label="Asignar Stock" @click="handleCreate" />
     </div>
 
     <InventarioList ref="inventarioListRef" @edit="handleEdit" />

@@ -3,11 +3,12 @@ import type { Pantalla } from '@/models/pantalla'
 import type { Modelo } from '@/models/modelo'
 import type { Calidad } from '@/models/calidad'
 import type { Categoria } from '@/models/categoria'
-import http from '@/plugins/axios'
+import clienteApi from '@/plugins/axios'
+import { mensajeDeError, notify } from '@/helpers/notificaciones'
 import { Button, Dialog, InputText, InputNumber, Select, Checkbox } from 'primevue'
 import { computed, ref, watch } from 'vue'
 
-const ENDPOINT = 'pantallas'
+const RUTA_API = 'pantallas'
 const props = defineProps({
   mostrar: Boolean,
   pantalla: {
@@ -22,7 +23,7 @@ const modelos = ref<Modelo[]>([])
 const calidades = ref<Calidad[]>([])
 const categorias = ref<Categoria[]>([])
 
-const dialogVisible = computed({
+const dialogoVisible = computed({
   get: () => props.mostrar,
   set: (value) => {
     if (!value) emit('close')
@@ -33,9 +34,9 @@ const pantalla = ref<Pantalla>({ ...props.pantalla })
 
 async function obtenerRelaciones() {
   const [resModelos, resCalidades, resCategorias] = await Promise.all([
-    http.get('modelos'),
-    http.get('calidades'),
-    http.get('categorias'),
+    clienteApi.get('modelos'),
+    clienteApi.get('calidades'),
+    clienteApi.get('categorias'),
   ])
   modelos.value = resModelos.data
   calidades.value = resCalidades.data
@@ -44,8 +45,8 @@ async function obtenerRelaciones() {
 
 watch(
   () => props.mostrar,
-  (newVal) => {
-    if (newVal) {
+  (nuevoValor) => {
+    if (nuevoValor) {
       obtenerRelaciones()
       pantalla.value = {
         ...props.pantalla,
@@ -56,9 +57,9 @@ watch(
   },
 )
 
-async function handleSave() {
+async function guardarCambios() {
   try {
-    const body = {
+    const cuerpo = {
       idModelo: pantalla.value.idModelo,
       idCalidad: pantalla.value.idCalidad,
       idCategoria: pantalla.value.idCategoria,
@@ -70,21 +71,22 @@ async function handleSave() {
       precioVenta: Number(pantalla.value.precioVenta),
     }
     if (props.modoEdicion) {
-      await http.patch(`${ENDPOINT}/${pantalla.value.id}`, body)
+      await clienteApi.patch(`${RUTA_API}/${pantalla.value.id}`, cuerpo)
     } else {
-      await http.post(ENDPOINT, body)
+      await clienteApi.post(RUTA_API, cuerpo)
     }
     emit('guardar')
     pantalla.value = {} as Pantalla
-    dialogVisible.value = false
-  } catch (error: any) {
-    alert(error?.response?.data?.message || 'Error al guardar la pantalla')
+    dialogoVisible.value = false
+    notify.success('Pantalla guardada correctamente')
+  } catch (error) {
+    notify.error(mensajeDeError(error, 'Error al guardar la pantalla'))
   }
 }
 </script>
 
 <template>
-  <Dialog v-model:visible="dialogVisible" :header="props.modoEdicion ? 'Editar Pantalla' : 'Crear Pantalla'"
+  <Dialog v-model:visible="dialogoVisible" :header="props.modoEdicion ? 'Editar Pantalla' : 'Crear Pantalla'"
     style="width: 30rem" modal>
     <div class="flex flex-column gap-3">
       <div>
@@ -122,12 +124,12 @@ async function handleSave() {
         </div>
       </div>
 
-      <div class="grid align-items-center">
+      <div class="grid align-articulos-center">
         <div class="col-6">
           <label class="font-semibold block mb-1">Color</label>
           <InputText v-model="pantalla.color" class="w-full" autocomplete="off" />
         </div>
-        <div class="col-6 flex align-items-center gap-2 mt-4">
+        <div class="col-6 flex align-articulos-center gap-2 mt-4">
           <Checkbox v-model="pantalla.conMarco" :binary="true" inputId="conMarcoCheck" />
           <label for="conMarcoCheck" class="font-semibold">Con Marco</label>
         </div>
@@ -139,8 +141,8 @@ async function handleSave() {
       </div>
 
       <div class="flex justify-end gap-2">
-        <Button type="button" label="Cancelar" icon="pi pi-times" severity="secondary" @click="dialogVisible = false" />
-        <Button type="button" label="Guardar" icon="pi pi-save" @click="handleSave" />
+        <Button type="button" label="Cancelar" icon="pi pi-times" severity="secondary" @click="dialogoVisible = false" />
+        <Button type="button" label="Guardar" icon="pi pi-save" @click="guardarCambios" />
       </div>
     </div>
   </Dialog>

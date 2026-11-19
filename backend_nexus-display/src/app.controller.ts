@@ -8,7 +8,7 @@ export class AppController {
 
   @AuthPublic()
   @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  obtenerMensajeBienvenida(): string {
+    return this.appService.obtenerMensajeBienvenida();
   }
 }

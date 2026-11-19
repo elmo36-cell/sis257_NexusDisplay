@@ -191,6 +191,31 @@ INSERT INTO marcas (id, nombre, fotografia) VALUES
 (19, 'ITEL',         'https://placehold.co/200x200/0f172a/38bdf8?text=ITEL'),
 (20, 'OUKITEL',      'https://placehold.co/200x200/0f172a/38bdf8?text=OUKITEL');
 
+UPDATE marcas AS m
+SET fotografia = v.url
+FROM (VALUES
+    (1,  'SAMSUNG',      'https://cdn.simpleicons.org/samsung/1428A0'),
+    (2,  'XIAOMI',       'https://cdn.simpleicons.org/xiaomi/FF6900'),
+    (3,  'APPLE',        'https://cdn.simpleicons.org/apple/000000'),
+    (4,  'MOTOROLA',     'https://cdn.simpleicons.org/motorola/001E50'),
+    (5,  'HONOR',        'https://cdn.simpleicons.org/honor/000000'),
+    (6,  'TECNO',        'https://logo.clearbit.com/tecno-mobile.com'),
+    (7,  'INFINIX',      'https://logo.clearbit.com/infinixmobility.com'),
+    (8,  'REALME',       'https://logo.clearbit.com/realme.com'),
+    (9,  'HUAWEI',       'https://cdn.simpleicons.org/huawei/FF0000'),
+    (10, 'ZTE',          'https://cdn.simpleicons.org/zte/0057B8'),
+    (11, 'OPPO',         'https://cdn.simpleicons.org/oppo/1BA784'),
+    (12, 'VIVO',         'https://cdn.simpleicons.org/vivo/415FFF'),
+    (13, 'ONEPLUS',      'https://cdn.simpleicons.org/oneplus/F5010C'),
+    (14, 'NOKIA',        'https://cdn.simpleicons.org/nokia/005AFF'),
+    (15, 'GOOGLE PIXEL', 'https://cdn.simpleicons.org/google/4285F4'),
+    (16, 'ASUS',         'https://cdn.simpleicons.org/asus/00539B'),
+    (17, 'SONY',         'https://cdn.simpleicons.org/sony/000000'),
+    (18, 'LENOVO',       'https://cdn.simpleicons.org/lenovo/E2231A'),
+    (19, 'ITEL',         'https://logo.clearbit.com/itel-life.com'),
+    (20, 'OUKITEL',      'https://logo.clearbit.com/oukitel.com')
+) AS v(id, nombre, url)
+WHERE m.id = v.id;
 -- ============================================================================
 -- 4. MODELOS (300: 15 por marca)
 -- ============================================================================
@@ -584,7 +609,7 @@ UNION ALL SELECT 'ventas', COUNT(*) FROM ventas
 UNION ALL SELECT 'detalle_venta', COUNT(*) FROM detalle_venta;
 
 
---actualizar fotos----
+---actualizar fotos----
 
 ALTER TABLE pantallas ALTER COLUMN fotografia TYPE TEXT;
 
@@ -613,6 +638,53 @@ SET fotografia = CASE
         'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320"><rect width="320" height="320" rx="20" fill="%230F172A"/><path d="M68 112h184v96H196v22h-72v-22H68z" fill="%23065F46" stroke="%2310B981" stroke-width="2.5"/><rect x="134" y="196" width="52" height="36" rx="6" fill="%23CBD5E1"/><rect x="144" y="218" width="32" height="8" rx="4" fill="%230F172A"/><rect x="86" y="128" width="44" height="28" rx="3" fill="%231E293B" stroke="%23F59E0B" stroke-width="1.5"/><circle cx="222" cy="146" r="10" fill="%23D97706"/><circle cx="222" cy="146" r="3" fill="%230F172A"/><path d="M90 176h140" stroke="%2334D399" stroke-width="2" stroke-dasharray="8 4"/><text x="160" y="74" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="14" fill="%2334D399">PLACA DE CARGA</text><text x="160" y="268" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="%2394A3B8">SUB-BOARD USB + MICRÓFONO</text></svg>'
 END;
 
+
+
+BEGIN;
+
+-- 1. Insertar 60 pantallas nuevas con calidad 4 (OEM Reforzado)
+INSERT INTO pantallas (id, id_modelo, id_calidad, id_categoria, nombre, codigo, color, con_marco, fotografia, precio_venta)
+SELECT
+  720 + m.id,
+  m.id,
+  4, -- Calidad: OEM Reforzado
+  1, -- Categoría: Pantallas
+  'Pantalla ' || ma.nombre || ' ' || m.nombre || ' OEM Reforzado IC Protegido',
+  'PAN-OEM-' || LPAD(m.id::text, 3, '0'),
+  'Negro',
+  true,
+  'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320"><rect width="320" height="320" rx="20" fill="%230F172A"/><rect x="86" y="24" width="148" height="264" rx="18" fill="%231E293B" stroke="%23F59E0B" stroke-width="3.5"/><rect x="93" y="31" width="134" height="250" rx="14" fill="%23090D16"/><defs><linearGradient id="goem" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="%23F59E0B" stop-opacity="0.30"/><stop offset="100%" stop-color="%23D97706" stop-opacity="0.08"/></linearGradient></defs><rect x="93" y="31" width="134" height="250" rx="14" fill="url(%23goem)"/><path d="M160 82l22 10v18c0 14-9 26-22 31-13-5-22-17-22-31V92l22-10z" fill="none" stroke="%23FBBF24" stroke-width="2.5"/><path d="M152 108l6 6 12-12" fill="none" stroke="%23FBBF24" stroke-width="2.5" stroke-linecap="round"/><path d="M135 288v16h50v-16" fill="%23D97706"/><rect x="142" y="294" width="36" height="8" rx="2" fill="%23FDE047"/><text x="160" y="168" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="13" fill="%23FBBF24">PANTALLA OEM</text><text x="160" y="185" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="%23CBD5E1">REFORZADA · IC PROTEGIDO</text></svg>',
+  ROUND(290 + m.id * 1.95, 2)
+FROM modelos m
+JOIN marcas ma ON ma.id = m.id_marca
+WHERE m.id <= 60
+ORDER BY m.id;
+
+-- 2. Crear su stock inicial en las 12 sucursales (720 registros nuevos de inventario)
+INSERT INTO inventario_almacen (id_pantalla, id_almacen, cantidad)
+SELECT
+  p.id,
+  a.id,
+  CASE
+    WHEN a.id = 1 THEN 50 + (p.id % 15)
+    WHEN a.id IN (2, 3, 5, 6) THEN 35 + (p.id % 12)
+    ELSE 25 + (p.id % 10)
+  END
+FROM pantallas p
+CROSS JOIN almacenes a
+WHERE p.id BETWEEN 721 AND 780;
+
+
+SELECT ca.id, ca.nombre AS calidad, COUNT(p.id) AS total_pantallas
+FROM calidades ca
+LEFT JOIN pantallas p ON p.id_calidad = ca.id AND p.id_categoria = 1
+GROUP BY ca.id, ca.nombre
+ORDER BY ca.id;
+-- 3. Actualizar la secuencia de pantallas
+SELECT setval(pg_get_serial_sequence('pantallas', 'id'), (SELECT MAX(id) FROM pantallas));
+
+COMMIT;
+
 ALTER TABLE marcas ALTER COLUMN fotografia TYPE TEXT;
 
 UPDATE marcas AS m
@@ -640,3 +712,4 @@ FROM (VALUES
     (20, 'OUKITEL',      'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 80"><polygon points="34,15 54,26 54,54 34,65 14,54 14,26" fill="none" stroke="%23F97316" stroke-width="6"/><circle cx="34" cy="40" r="8" fill="%23111827"/><text x="68" y="54" font-family="Impact, Arial Black, sans-serif" font-weight="900" font-size="44" letter-spacing="3" fill="%23111827">OUKITEL</text></svg>')
 ) AS v(id, nombre, url)
 WHERE m.id = v.id;
+

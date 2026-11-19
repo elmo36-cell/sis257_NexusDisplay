@@ -68,9 +68,6 @@ export class CreatePantallaDto {
   @ApiProperty({ example: 'https://ejemplo.com/imagen.jpg' })
   @IsNotEmpty({ message: 'La fotografía es obligatoria' })
   @IsString({ message: 'La fotografía debe ser de tipo cadena' })
-  @MaxLength(800, {
-    message: 'La fotografía no puede tener más de 800 caracteres',
-  })
   @Transform(({ value }): string | undefined =>
     typeof value == 'string' ? value.trim() : value,
   )

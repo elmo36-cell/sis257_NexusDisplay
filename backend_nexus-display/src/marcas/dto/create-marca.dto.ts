@@ -23,7 +23,6 @@ export class CreateMarcaDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString({ message: 'La fotografia debe ser de tipo cadena' })
-  @MaxLength(800, { message: 'La fotografia no puede tener más de 800 caracteres' })
   @Transform(({ value }): string | undefined => (typeof value == 'string' ? value.trim() : value))
   readonly fotografia?: string;
 }

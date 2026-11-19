@@ -17,8 +17,8 @@ export class Marca {
   @Column('varchar', { length: 50, unique: true })
   nombre: string;
 
-  @Column('varchar', {
-    length: 800,
+  // Igual que en pantallas, la base la tiene como TEXT para permitir data URI largos.
+  @Column('text', {
     default: 'https://placehold.co/200x200/0f172a/38bdf8?text=Marca',
   })
   fotografia: string;

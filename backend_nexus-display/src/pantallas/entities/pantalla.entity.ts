@@ -42,7 +42,6 @@ export class Pantalla {
   @Column({ name: 'con_marco', type: 'boolean', default: false })
   conMarco: boolean;
 
-  // El catálogo guarda las fotos como data URI, así que la columna es TEXT en la base.
   @Column('text')
   fotografia: string;
 

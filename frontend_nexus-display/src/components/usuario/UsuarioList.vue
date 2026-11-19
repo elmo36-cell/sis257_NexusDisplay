@@ -153,15 +153,15 @@ defineExpose({ obtenerLista })
               </span>
             </td>
             <td>
-              <span class="badge" :class="u.activo ? 'bg-success' : 'bg-danger'">
-                {{ u.activo ? 'Activo' : 'Inactivo' }}
-              </span>
-            </td>
-            <td>
               <span v-if="u.idAlmacen" class="badge bg-light text-dark border">
                 <i class="pi pi-building me-1"></i>{{ nombreAlmacen(u.idAlmacen) }}
               </span>
-              <span v-else class="muted">—</span>
+              <span v-else class="muted">Sin asignar</span>
+            </td>
+            <td>
+              <span class="badge" :class="u.activo ? 'bg-success' : 'bg-danger'">
+                {{ u.activo ? 'Activo' : 'Inactivo' }}
+              </span>
             </td>
             <td v-if="sesion.rol === 'ADMIN'">
               <Button label="Editar" text @click="emitirEdicion(u)" />

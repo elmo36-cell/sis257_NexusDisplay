@@ -365,9 +365,10 @@ onMounted(() => {
 
           <div class="col-lg-5 d-none d-lg-flex justify-content-end align-items-center">
             <img
-              src="/public/img/nexus-productos.png"
+              src="/img/nexus-productos.png"
               alt="Pantallas de celulares"
               class="hero-product-image"
+              @error="usarFallback"
             />
           </div>
 

@@ -159,6 +159,18 @@ const marcoDisponible = computed(
   () => categoriaActiva.value.trim().toLowerCase() === 'pantallas',
 )
 
+// La calidad es un atributo de las Pantallas: en el resto de las categorías el
+// select queda deshabilitado para no ofrecer un filtro que no aplica.
+const calidadDisponible = computed(
+  () => categoriaActiva.value.trim().toLowerCase() === 'pantallas',
+)
+
+// El título del buscador acompaña a la categoría elegida, porque el catálogo no
+// es solo de pantallas.
+const tituloBuscador = computed(() =>
+  categoriaActiva.value ? `Buscar ${categoriaActiva.value.toLowerCase()}` : 'Buscar pantalla',
+)
+
 const hayFiltros = computed(
   () =>
     busqueda.value.trim() !== '' ||
@@ -281,6 +293,12 @@ watch(marcoDisponible, (disponible) => {
   if (!disponible) soloConMarco.value = false
 })
 
+// Igual con la calidad: al pasar a una categoría que no la usa, la saco del
+// filtro para no dejar resultados escondidos por un select deshabilitado.
+watch(calidadDisponible, (disponible) => {
+  if (!disponible) filtroCalidad.value = ''
+})
+
 watch(
   () => carrito.catalogoVersion,
   () => cargarCatalogo(),
@@ -316,7 +334,7 @@ onMounted(() => {
                 <i class="pi pi-comments me-2"></i>Hablar con un vendedor
               </a>
               <button v-if="carrito.unidades" type="button" class="btn btn-outline-light" @click="carrito.abrir()">
-                <i class="pi pi-shopping-carrito me-2"></i>
+                <i class="pi pi-shopping-cart me-2"></i>
                 Carrito ({{ carrito.unidades }})
               </button>
             </div>
@@ -417,7 +435,7 @@ onMounted(() => {
         </div>
 
         <div class="filter-bar__search">
-          <label class="form-label d-block mb-1" for="filtro-busqueda">Buscar pantalla</label>
+          <label class="form-label d-block mb-1" for="filtro-busqueda">{{ tituloBuscador }}</label>
           <div class="position-relative">
             <i class="pi pi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"
               style="font-size: 0.85rem"></i>
@@ -427,13 +445,16 @@ onMounted(() => {
         </div>
 
         <div>
-          <label class="form-label d-block mb-1" for="filtro-calidad">Calidad</label>
-          <select id="filtro-calidad" v-model="filtroCalidad" class="form-select" style="min-width: 9rem">
+          <label class="form-label d-block mb-1" for="filtro-calidad"
+            :class="{ 'text-muted': !calidadDisponible }">Calidad</label>
+          <select id="filtro-calidad" v-model="filtroCalidad" class="form-select"
+            style="min-width: 9rem" :disabled="!calidadDisponible">
             <option value="">Todas las calidades</option>
             <option v-for="calidad in calidades" :key="calidad.id" :value="String(calidad.id)">
               {{ calidad.nombre }}
             </option>
           </select>
+          <small v-if="!calidadDisponible" class="text-muted">Solo para Pantallas</small>
         </div>
 
         <div>
@@ -471,7 +492,7 @@ onMounted(() => {
             <option v-for="opcion in OPCIONES_POR_PAGINA" :key="opcion" :value="opcion">{{ opcion }}</option>
           </select>
           <button v-if="carrito.unidades" type="button" class="btn btn-sm btn-outline-primary" @click="carrito.abrir()">
-            <i class="pi pi-shopping-carrito me-1"></i>Ver carrito ({{ carrito.unidades }})
+            <i class="pi pi-shopping-cart me-1"></i>Ver carrito ({{ carrito.unidades }})
           </button>
         </div>
       </div>

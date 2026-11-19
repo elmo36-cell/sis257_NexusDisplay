@@ -283,7 +283,7 @@ async function confirmar() {
   <Drawer v-model:visible="visible" position="right" :style="{ width: '28rem' }" class="carrito-drawer"
     :header="`Carrito (${carrito.unidades})`">
     <div v-if="!carrito.articulos.length" class="empty-state">
-      <div class="empty-state__icon"><i class="pi pi-shopping-carrito"></i></div>
+      <div class="empty-state__icon"><i class="pi pi-shopping-cart"></i></div>
       <h3 class="h6 mb-1">Tu carrito está vacío</h3>
       <p class="mb-3">Agrega pantallas del catálogo para continuar con tu compra.</p>
       <button type="button" class="btn btn-outline-secondary" @click="carrito.cerrar()">

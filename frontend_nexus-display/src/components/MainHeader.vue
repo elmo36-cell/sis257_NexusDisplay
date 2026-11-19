@@ -38,7 +38,7 @@ const enlaces = computed<EnlaceNav[]>(() => {
 
   return [
     ...base,
-    { label: 'Ventas', to: '/ventas', icon: 'pi pi-shopping-carrito' },
+    { label: 'Ventas', to: '/ventas', icon: 'pi pi-shopping-cart' },
     { label: 'Inventario', to: '/inventario', icon: 'pi pi-box' },
     { label: 'Almacenes', to: '/almacenes', icon: 'pi pi-building' },
     { label: 'Categorías', to: '/categorias', icon: 'pi pi-tags' },
@@ -141,7 +141,7 @@ watch(
 
         <div class="ms-auto d-flex align-articulos-center gap-2">
           <button type="button" class="nexus-carrito" aria-label="Abrir carrito de compras" @click="carrito.abrir()">
-            <i class="pi pi-shopping-carrito"></i>
+            <i class="pi pi-shopping-cart"></i>
             <span v-if="carrito.unidades" class="nexus-cart__badge">{{ carrito.unidades }}</span>
           </button>
 
@@ -186,7 +186,7 @@ watch(
         </template>
 
         <button type="button" class="nexus-link mt-1" @click="carrito.abrir(); navAbierto = false">
-          <i class="pi pi-shopping-carrito"></i>
+          <i class="pi pi-shopping-cart"></i>
           <span>Carrito ({{ carrito.unidades }})</span>
         </button>
 

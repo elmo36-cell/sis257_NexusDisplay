@@ -582,3 +582,61 @@ UNION ALL SELECT 'compras', COUNT(*) FROM compras
 UNION ALL SELECT 'detalle_compra', COUNT(*) FROM detalle_compra
 UNION ALL SELECT 'ventas', COUNT(*) FROM ventas
 UNION ALL SELECT 'detalle_venta', COUNT(*) FROM detalle_venta;
+
+
+--actualizar fotos----
+
+ALTER TABLE pantallas ALTER COLUMN fotografia TYPE TEXT;
+
+UPDATE pantallas
+SET fotografia = CASE
+    -- CATEGORÍA 1: PANTALLAS (diferenciadas según su calidad)
+    WHEN id_categoria = 1 AND id_calidad = 1 THEN
+        'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320"><rect width="320" height="320" rx="20" fill="%230F172A"/><rect x="86" y="24" width="148" height="264" rx="18" fill="%23334155" stroke="%2394A3B8" stroke-width="4"/><rect x="93" y="31" width="134" height="250" rx="14" fill="%23020617"/><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="%230EA5E9" stop-opacity="0.35"/><stop offset="100%" stop-color="%236366F1" stop-opacity="0.1"/></linearGradient></defs><rect x="93" y="31" width="134" height="250" rx="14" fill="url(%23g1)"/><circle cx="160" cy="44" r="4" fill="%231E293B" stroke="%23475569" stroke-width="1.5"/><path d="M135 288v16h50v-16" fill="%23D97706"/><rect x="142" y="294" width="36" height="8" rx="2" fill="%23FBBF24"/><text x="160" y="155" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="13" fill="%2338BDF8">PANTALLA</text><text x="160" y="173" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="%2394A3B8">ORIGINAL SERVICE PACK</text></svg>'
+
+    WHEN id_categoria = 1 AND id_calidad = 2 THEN
+        'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320"><rect width="320" height="320" rx="20" fill="%230F172A"/><rect x="90" y="26" width="140" height="258" rx="16" fill="%23090D16" stroke="%238B5CF6" stroke-width="2.5"/><defs><linearGradient id="g2" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="%23EC4899" stop-opacity="0.35"/><stop offset="100%" stop-color="%238B5CF6" stop-opacity="0.2"/></linearGradient></defs><rect x="94" y="30" width="132" height="250" rx="13" fill="url(%23g2)"/><circle cx="160" cy="232" r="14" fill="none" stroke="%23A78BFA" stroke-width="2" stroke-dasharray="4 3"/><circle cx="160" cy="232" r="7" fill="none" stroke="%23C4B5FD" stroke-width="1.5"/><path d="M122 284v18h24v-18M174 284v18h24v-18" fill="%23F59E0B"/><text x="160" y="145" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="14" fill="%23E879F9">PANTALLA AMOLED</text><text x="160" y="163" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="%23CBD5E1">OLED · HUELLA EN PANTALLA</text></svg>'
+
+    WHEN id_categoria = 1 THEN
+        'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320"><rect width="320" height="320" rx="20" fill="%230F172A"/><rect x="92" y="26" width="136" height="256" rx="14" fill="%231E293B" stroke="%2338BDF8" stroke-width="2"/><rect x="97" y="31" width="126" height="246" rx="11" fill="%230B1120"/><path d="M97 31 L223 277" stroke="%2338BDF8" stroke-opacity="0.15" stroke-width="18"/><path d="M140 282v22h40v-22" fill="%23B45309"/><rect x="145" y="295" width="30" height="7" rx="1.5" fill="%23FDE047"/><text x="160" y="152" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="14" fill="%237DD3FC">PANTALLA INCELL</text><text x="160" y="170" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="%2394A3B8">DISPLAY + TÁCTIL</text></svg>'
+
+    -- CATEGORÍA 2: BATERÍAS
+    WHEN id_categoria = 2 THEN
+        'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320"><rect width="320" height="320" rx="20" fill="%230F172A"/><path d="M126 52V32h22v20M172 52V32h22v20" fill="%23D97706"/><rect x="122" y="28" width="30" height="8" rx="2" fill="%23FBBF24"/><rect x="168" y="28" width="30" height="8" rx="2" fill="%23FBBF24"/><rect x="94" y="52" width="132" height="236" rx="12" fill="%231E293B" stroke="%23475569" stroke-width="2.5"/><rect x="102" y="64" width="116" height="212" rx="8" fill="%230B1120"/><path d="M166 105l-24 44h20l-8 44 28-48h-20z" fill="%2322C55E"/><text x="160" y="222" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="14" fill="%23F8FAFC">BATERÍA INTERNA</text><text x="160" y="240" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="%2394A3B8">POLÍMERO DE LITIO · 5000mAh</text></svg>'
+
+    -- CATEGORÍA 3: PINES DE CARGA
+    WHEN id_categoria = 3 THEN
+        'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320"><rect width="320" height="320" rx="20" fill="%230F172A"/><rect x="82" y="108" width="156" height="96" rx="16" fill="%2394A3B8" stroke="%23CBD5E1" stroke-width="3"/><rect x="98" y="132" width="124" height="48" rx="24" fill="%230F172A"/><rect x="114" y="151" width="92" height="10" rx="5" fill="%23F59E0B"/><path d="M96 204v22h14v-22M126 204v22h14v-22M180 204v22h14v-22M210 204v22h14v-22" fill="%23E2E8F0"/><text x="160" y="72" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="14" fill="%2338BDF8">PIN DE CARGA</text><text x="160" y="264" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="%2394A3B8">CONECTOR TIPO-C SMD</text></svg>'
+
+    -- CATEGORÍA 4: PLACAS / ENTRADAS DE CARGA
+    ELSE
+        'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320"><rect width="320" height="320" rx="20" fill="%230F172A"/><path d="M68 112h184v96H196v22h-72v-22H68z" fill="%23065F46" stroke="%2310B981" stroke-width="2.5"/><rect x="134" y="196" width="52" height="36" rx="6" fill="%23CBD5E1"/><rect x="144" y="218" width="32" height="8" rx="4" fill="%230F172A"/><rect x="86" y="128" width="44" height="28" rx="3" fill="%231E293B" stroke="%23F59E0B" stroke-width="1.5"/><circle cx="222" cy="146" r="10" fill="%23D97706"/><circle cx="222" cy="146" r="3" fill="%230F172A"/><path d="M90 176h140" stroke="%2334D399" stroke-width="2" stroke-dasharray="8 4"/><text x="160" y="74" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="14" fill="%2334D399">PLACA DE CARGA</text><text x="160" y="268" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="%2394A3B8">SUB-BOARD USB + MICRÓFONO</text></svg>'
+END;
+
+ALTER TABLE marcas ALTER COLUMN fotografia TYPE TEXT;
+
+UPDATE marcas AS m
+SET fotografia = v.url
+FROM (VALUES
+    (1,  'SAMSUNG',      'https://cdn.simpleicons.org/samsung/1428A0'),
+    (2,  'XIAOMI',       'https://cdn.simpleicons.org/xiaomi/FF6900'),
+    (3,  'APPLE',        'https://cdn.simpleicons.org/apple/000000'),
+    (4,  'MOTOROLA',     'https://cdn.simpleicons.org/motorola/001E50'),
+    (5,  'HONOR',        'https://cdn.simpleicons.org/honor/000000'),
+    (6,  'TECNO',        'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 80"><g fill="%230066FF"><path d="M12 18h46v11H41v35H29V29H12V18z"/><path d="M68 18h44v11H80v7h28v10H80v7h32v11H68V18z"/><path d="M148 17c14 0 23 7 25 17h-13c-1-4-5-6-12-6-9 0-15 6-15 13s6 13 15 13c7 0 11-2 12-6h13c-2 10-11 17-25 17-16 0-28-10-28-24s12-24 28-24z"/><path d="M185 18h12l24 28V18h12v46h-11l-25-29v29h-12V18z"/><path d="M275 17c17 0 29 10 29 24s-12 24-29 24-29-10-29-24 12-24 29-24zm0 11c-10 0-16 6-16 13s6 13 16 13 16-6 16-13-6-13-16-13z"/></g></svg>'),
+    (7,  'INFINIX',      'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 80"><polygon points="22,60 44,18 56,18 34,60" fill="%2322C55E"/><polygon points="40,60 54,34 66,34 52,60" fill="%23111827"/><text x="76" y="55" font-family="Trebuchet MS, Arial, sans-serif" font-weight="900" font-style="italic" font-size="44" letter-spacing="2" fill="%23111827">Infinix</text><circle cx="235" cy="21" r="4.5" fill="%2322C55E"/></svg>'),
+    (8,  'REALME',       'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 80"><text x="50%" y="54" text-anchor="middle" font-family="Century Gothic, Futura, Trebuchet MS, sans-serif" font-weight="700" font-size="52" letter-spacing="3" fill="%2318181B">realme</text><rect x="52" y="64" width="236" height="4" rx="2" fill="%23FFC915"/></svg>'),
+    (9,  'HUAWEI',       'https://cdn.simpleicons.org/huawei/FF0000'),
+    (10, 'ZTE',          'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 80"><g fill="%230057B8"><path d="M35 16h66v12L55 52h46v12H35V52l46-24H35V16z"/><path d="M113 16h68v13h-27v35h-14V29h-27V16z"/><path d="M194 16h66v12h-52v7h46v11h-46v7h52v11h-66V16z"/></g></svg>'),
+    (11, 'OPPO',         'https://cdn.simpleicons.org/oppo/1BA784'),
+    (12, 'VIVO',         'https://cdn.simpleicons.org/vivo/415FFF'),
+    (13, 'ONEPLUS',      'https://cdn.simpleicons.org/oneplus/F5010C'),
+    (14, 'NOKIA',        'https://cdn.simpleicons.org/nokia/005AFF'),
+    (15, 'GOOGLE PIXEL', 'https://cdn.simpleicons.org/google/4285F4'),
+    (16, 'ASUS',         'https://cdn.simpleicons.org/asus/00539B'),
+    (17, 'SONY',         'https://cdn.simpleicons.org/sony/000000'),
+    (18, 'LENOVO',       'https://cdn.simpleicons.org/lenovo/E2231A'),
+    (19, 'ITEL',         'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 80"><text x="150" y="52" text-anchor="middle" font-family="Trebuchet MS, Arial Rounded MT Bold, sans-serif" font-weight="900" font-size="54" letter-spacing="3" fill="%23E60012">itel</text><path d="M104 59 Q150 73 196 59" stroke="%23E60012" stroke-width="5" stroke-linecap="round" fill="none"/></svg>'),
+    (20, 'OUKITEL',      'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 80"><polygon points="34,15 54,26 54,54 34,65 14,54 14,26" fill="none" stroke="%23F97316" stroke-width="6"/><circle cx="34" cy="40" r="8" fill="%23111827"/><text x="68" y="54" font-family="Impact, Arial Black, sans-serif" font-weight="900" font-size="44" letter-spacing="3" fill="%23111827">OUKITEL</text></svg>')
+) AS v(id, nombre, url)
+WHERE m.id = v.id;

@@ -49,29 +49,92 @@ const dialogoVisible = computed({
   },
 })
 
+/**
+ * Copio al formulario los datos del usuario que se va a editar. La clave no
+ * viene de la API (está oculta por seguridad), así que ese campo queda vacío y
+ * solo se manda si escriben una nueva.
+ */
+function rellenarFormulario(datos: Usuario) {
+  usuario.value = {
+    ...datos,
+    rol: sesion.rol === 'ADMIN' ? datos.rol || 'CLIENTE' : 'CLIENTE',
+    nombreUsuario: datos.nombreUsuario ?? '',
+    correo: datos.correo ?? '',
+    nombre: datos.nombre || '',
+    primerApellido: datos.primerApellido || '',
+    segundoApellido: datos.segundoApellido || '',
+    telefono: datos.telefono || '',
+    documento: datos.documento || '',
+    idAlmacen: datos.idAlmacen ?? null,
+    clave: '',
+    activo: datos.activo ?? true,
+  }
+}
+
+/** Dejo el formulario en blanco para dar de alta un usuario nuevo. */
+function limpiarFormulario() {
+  usuario.value = {
+    rol: 'CLIENTE',
+    nombreUsuario: '',
+    correo: '',
+    nombre: '',
+    primerApellido: '',
+    segundoApellido: '',
+    telefono: '',
+    documento: '',
+    idAlmacen: null,
+    clave: '',
+    activo: true,
+  } as Usuario
+}
+
+// Identifico cada apertura del diálogo para que una respuesta lenta de la API
+// no pise el formulario si mientras tanto se abrió otro usuario.
+let solicitudActual = 0
+
 watch(
-  () => props.mostrar,
-  (nuevoValor) => {
-    if (nuevoValor) {
-      usuario.value = {
-        ...props.usuario,
-        rol: sesion.rol === 'ADMIN' ? props.usuario?.rol || 'CLIENTE' : 'CLIENTE',
-        nombre: props.usuario?.nombre || '',
-        primerApellido: props.usuario?.primerApellido || '',
-        segundoApellido: props.usuario?.segundoApellido || '',
-        telefono: props.usuario?.telefono || '',
-        documento: props.usuario?.documento || '',
-        idAlmacen: props.usuario?.idAlmacen ?? null,
-        clave: '',
-        activo: props.usuario?.activo ?? true,
-      }
+  () => [props.mostrar, props.usuario?.id] as const,
+  ([mostrar]) => {
+    if (!mostrar) {
+      solicitudActual++
+      return
     }
+
+    // Al crear (por ejemplo cuando el vendedor añade un cliente) arranco con el
+    // formulario en blanco, incluido el NIT / CI, para que se escriban los
+    // datos desde cero y no quede nada del cliente que se editó antes.
+    if (!props.modoEdicion || !props.usuario?.id) {
+      limpiarFormulario()
+      return
+    }
+
+    // En edición relleno primero con la fila de la lista y después pido el
+    // usuario completo a la API, así los campos (nombre, apellidos, teléfono,
+    // NIT / CI, sucursal y estado) quedan siempre con los datos del cliente.
+    rellenarFormulario(props.usuario)
+    const id = props.usuario.id
+    const solicitud = ++solicitudActual
+    clienteApi
+      .get<Usuario>(`${RUTA_API}/${id}`)
+      .then(({ data }) => {
+        if (solicitud === solicitudActual && data?.id) rellenarFormulario(data)
+      })
+      .catch(() => {
+        // Si falla la carga puntual me quedo con lo que ya traía la fila.
+      })
   },
 )
 
 // Armo el cuerpo solo con lo que el backend espera. La clave se manda nada más
 // si escribieron una nueva, y el rol lo fija el servidor según quién está logueado.
 async function guardarCambios() {
+  // El CI / NIT se pide al dar de alta al cliente; en edición lo dejo
+  // opcional para poder corregir usuarios viejos que no lo tienen.
+  const esAltaDeCliente = !props.modoEdicion && usuario.value.rol === 'CLIENTE'
+  if (esAltaDeCliente && !usuario.value.documento?.trim()) {
+    notify.warn('Ingresa el NIT / CI del cliente')
+    return
+  }
   try {
     const cuerpo: Record<string, unknown> = {
       nombreUsuario: usuario.value.nombreUsuario,
@@ -168,8 +231,11 @@ async function guardarCambios() {
       </div>
 
       <div class="d-flex flex-column gap-1">
-        <label class="fw-semibold">NIT / CI</label>
-        <InputText v-model="usuario.documento" class="w-100" placeholder="Ej: 7123456" />
+        <label class="fw-semibold">
+          NIT / CI
+          <span v-if="!props.modoEdicion && usuario.rol === 'CLIENTE'" class="text-danger">*</span>
+        </label>
+        <InputText v-model="usuario.documento" class="w-100" maxlength="30" placeholder="Ej: 7123456" />
       </div>
 
       <div class="d-flex flex-column gap-1">

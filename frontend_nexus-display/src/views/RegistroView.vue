@@ -16,6 +16,7 @@ const segundoApellido = ref('')
 const nombreUsuario = ref('')
 const correo = ref('')
 const telefono = ref('')
+const documento = ref('')
 const clave = ref('')
 const repetirClave = ref('')
 const verClave = ref(false)
@@ -24,13 +25,15 @@ const mensajeError = ref('')
 
 /**
  * Reviso el formulario antes de enviarlo: nombre y primer apellido
- * obligatorios, usuario de 3 letras o más, correo, clave de 6 o más y que
- * las dos claves coincidan. Igual el backend valida todo otra vez.
+ * obligatorios, CI / NIT obligatorio (con eso se emite la factura), usuario
+ * de 3 letras o más, correo, clave de 6 o más y que las dos claves
+ * coincidan. Igual el backend valida todo otra vez.
  */
 const puedeEnviar = computed(
   () =>
     nombre.value.trim().length > 0 &&
     primerApellido.value.trim().length > 0 &&
+    documento.value.trim().length > 0 &&
     nombreUsuario.value.trim().length >= 3 &&
     correo.value.trim().length > 0 &&
     clave.value.length >= 6 &&
@@ -56,6 +59,7 @@ async function onSubmit() {
       nombreUsuario: nombreUsuario.value.trim(),
       correo: correo.value.trim(),
       telefono: telefono.value.trim() || undefined,
+      documento: documento.value.trim(),
       clave: clave.value,
     })
 
@@ -147,10 +151,17 @@ async function onSubmit() {
                 autocomplete="email" placeholder="correo@ejemplo.com" />
             </div>
 
-            <div class="field-group">
-              <label for="registro-telefono">Teléfono / celular (opcional)</label>
-              <input id="registro-telefono" v-model="telefono" class="form-control" type="tel"
-                autocomplete="tel" placeholder="Ej: 71234567" />
+            <div class="row g-2">
+              <div class="col-12 col-sm-6 field-group">
+                <label for="registro-documento">NIT / CI</label>
+                <input id="registro-documento" v-model="documento" class="form-control" type="text"
+                  inputmode="numeric" maxlength="30" autocomplete="off" placeholder="Ej: 7123456" />
+              </div>
+              <div class="col-12 col-sm-6 field-group">
+                <label for="registro-telefono">Teléfono / celular (opcional)</label>
+                <input id="registro-telefono" v-model="telefono" class="form-control" type="tel"
+                  autocomplete="tel" placeholder="Ej: 71234567" />
+              </div>
             </div>
 
             <div class="field-group">

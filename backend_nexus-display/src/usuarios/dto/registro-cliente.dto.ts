@@ -73,6 +73,15 @@ export class RegistroClienteDto {
   )
   readonly telefono?: string;
 
+  @ApiProperty({ example: '7123456', description: 'NIT o CI del cliente' })
+  @IsNotEmpty({ message: 'El NIT / CI es obligatorio' })
+  @IsString({ message: 'El NIT / CI debe ser de tipo cadena' })
+  @MaxLength(30, { message: 'El NIT / CI no puede tener más de 30 caracteres' })
+  @Transform(({ value }): string | undefined =>
+    typeof value == 'string' ? value.trim() : value,
+  )
+  readonly documento: string;
+
   @ApiProperty({ example: '123456' })
   @IsNotEmpty({ message: 'La contraseña es obligatoria' })
   @IsString({ message: 'La contraseña debe ser de tipo cadena' })

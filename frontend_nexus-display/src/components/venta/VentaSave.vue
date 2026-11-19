@@ -267,8 +267,15 @@ function quitarItem(indice: number) {
 }
 
 async function registrarNuevoClienteRapido() {
-  if (!nuevoClienteUsuario.value || !nuevoClienteCorreo.value || !nuevoClienteClave.value) {
-    notify.warn('Completa usuario, correo y contraseña para registrar al cliente')
+  // El CI / NIT también es obligatorio: con ese documento queda identificado
+  // el cliente en la venta y en la factura.
+  if (
+    !nuevoClienteUsuario.value ||
+    !nuevoClienteCorreo.value ||
+    !nuevoClienteDocumento.value.trim() ||
+    !nuevoClienteClave.value
+  ) {
+    notify.warn('Completa usuario, correo, NIT / CI y contraseña para registrar al cliente')
     return
   }
   try {
@@ -276,7 +283,7 @@ async function registrarNuevoClienteRapido() {
       nombreUsuario: nuevoClienteUsuario.value,
       correo: nuevoClienteCorreo.value,
       telefono: nuevoClienteTelefono.value,
-      documento: nuevoClienteDocumento.value,
+      documento: nuevoClienteDocumento.value.trim(),
       clave: nuevoClienteClave.value,
       rol: 'CLIENTE',
       activo: true,

@@ -11,6 +11,7 @@ export interface DatosRegistro {
   nombreUsuario: string
   correo: string
   telefono?: string
+  documento: string
   clave: string
 }
 

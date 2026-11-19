@@ -185,6 +185,9 @@ export class UsuariosService implements OnModuleInit {
     usuario.nombre = dto.nombre;
     usuario.primerApellido = dto.primerApellido;
     usuario.segundoApellido = dto.segundoApellido || null;
+    // El CI / NIT es obligatorio en el registro público: con ese documento se
+    // identifica al cliente en la venta y en la factura.
+    usuario.documento = dto.documento;
     usuario.rol = RolNombre.CLIENTE;
     usuario.idRol = ID_ROL_POR_NOMBRE[RolNombre.CLIENTE];
     usuario.activo = true;

@@ -142,6 +142,47 @@ const detalles = ref<
   }[]
 >([])
 
+// Stock real de una pantalla en el almacén de salida. La lista de pantallas ya
+// trae el inventario de cada sucursal, así que no hace falta otra petición.
+function stockEnAlmacen(
+  idProducto: number,
+  idSucursal: number | null = idAlmacen.value,
+): number {
+  const pantalla = pantallas.value.find((p) => p.id === idProducto)
+  const inventario = (pantalla?.inventarios ?? []).find(
+    (inv) => Number(inv.idAlmacen) === Number(idSucursal),
+  )
+  return Number(inventario?.cantidad ?? 0)
+}
+
+const stockPantallaSeleccionada = computed(() =>
+  idPantalla.value ? stockEnAlmacen(idPantalla.value) : 0,
+)
+
+function cantidadEnVenta(idProducto: number): number {
+  return detalles.value.find((d) => d.idPantalla === idProducto)?.cantidad ?? 0
+}
+
+// Si se cambia la sucursal de salida, ajusto la venta al stock de la nueva
+// sucursal: quito lo que no hay y recorto lo que excede, avisando al vendedor.
+watch(idAlmacen, (nuevo) => {
+  if (!nuevo || detalles.value.length === 0) return
+  const ajustes: string[] = []
+  detalles.value = detalles.value.filter((articulo) => {
+    const disponible = stockEnAlmacen(articulo.idPantalla, nuevo)
+    if (disponible <= 0) {
+      ajustes.push(`${articulo.nombre}: sin stock en esta sucursal, se quitó de la venta`)
+      return false
+    }
+    if (articulo.cantidad > disponible) {
+      ajustes.push(`${articulo.nombre}: ajustado a ${disponible} unidad(es)`)
+      articulo.cantidad = disponible
+    }
+    return true
+  })
+  if (ajustes.length > 0) notify.warn(ajustes.join(' · '))
+})
+
 const dialogoVisible = computed({
   get: () => props.mostrar,
   set: (value) => {
@@ -219,24 +260,51 @@ function cambiarTipoCliente() {
   documentoCliente.value = ''
 }
 
-// Al presionar el botón +: si la pantalla ya está en la lista, AUMENTA su cantidad
+// Al presionar el botón +: si la pantalla ya está en la lista, AUMENTA su cantidad,
+// pero nunca más allá del stock que hay en la sucursal de salida.
 function agregarItem() {
-  if (!idPantalla.value && detalles.value.length > 0) {
-    // Si el selector quedó vacío pero ya hay un ítem en la lista, le suma +1 al último ítem agregado
+  const cantAgregar = Number(cantidad.value) || 1
+
+  const p = idPantalla.value
+    ? pantallas.value.find((x) => x.id === idPantalla.value)
+    : null
+
+  if (!p) {
+    // Si el selector quedó vacío pero ya hay un ítem en la lista, le sumo al
+    // último ítem agregado, controlando también su stock.
     const ultimo = detalles.value[detalles.value.length - 1]
     if (ultimo) {
-      ultimo.cantidad += Number(cantidad.value) || 1
+      if (ultimo.cantidad + cantAgregar > stockEnAlmacen(ultimo.idPantalla)) {
+        notify.warn(
+          `Stock insuficiente de "${ultimo.nombre}". Disponible en esta sucursal: ${stockEnAlmacen(ultimo.idPantalla)}`,
+        )
+        return
+      }
+      ultimo.cantidad += cantAgregar
+      cantidad.value = 1
+      return
     }
-    return
-  }
-
-  const p = pantallas.value.find((x) => x.id === idPantalla.value)
-  if (!p) {
     notify.warn('Selecciona una pantalla de la lista')
     return
   }
 
-  const cantAgregar = Number(cantidad.value) || 1
+  const disponible = stockEnAlmacen(p.id)
+  const yaEnVenta = cantidadEnVenta(p.id)
+
+  if (disponible <= 0) {
+    notify.warn(
+      `"${p.nombre}" no tiene stock en ${nombreAlmacenSeleccionado.value || 'esta sucursal'}`,
+    )
+    return
+  }
+
+  if (yaEnVenta + cantAgregar > disponible) {
+    notify.warn(
+      `Stock insuficiente de "${p.nombre}". Disponible: ${disponible}, ya en la venta: ${yaEnVenta}`,
+    )
+    return
+  }
+
   const existente = detalles.value.find((d) => d.idPantalla === p.id)
 
   if (existente) {
@@ -257,9 +325,20 @@ function cambiarCantidadItem(indice: number, delta: number) {
   const articulo = detalles.value[indice]
   if (!articulo) return
   const nueva = articulo.cantidad + delta
-  if (nueva >= 1) {
-    articulo.cantidad = nueva
+  if (nueva < 1) return
+
+  // Al sumar unidades no dejo pasar el stock disponible en la sucursal.
+  if (delta > 0) {
+    const disponible = stockEnAlmacen(articulo.idPantalla)
+    if (nueva > disponible) {
+      notify.warn(
+        `Solo hay ${disponible} unidad(es) de "${articulo.nombre}" en ${nombreAlmacenSeleccionado.value || 'esta sucursal'}`,
+      )
+      return
+    }
   }
+
+  articulo.cantidad = nueva
 }
 
 function quitarItem(indice: number) {
@@ -321,6 +400,19 @@ async function guardarCambios() {
     notify.warn('Ingresa el nombre del cliente')
     return
   }
+
+  // Última revisión contra el stock de la sucursal antes de enviar: si otro
+  // vendedor vendió mientras tanto, se avisa acá y el backend igual lo rechaza.
+  const itemSinStock = detalles.value.find(
+    (d) => d.cantidad > stockEnAlmacen(d.idPantalla),
+  )
+  if (itemSinStock) {
+    notify.warn(
+      `Stock insuficiente de "${itemSinStock.nombre}". Disponible en esta sucursal: ${stockEnAlmacen(itemSinStock.idPantalla)}`,
+    )
+    return
+  }
+
   try {
     const { data: creada } = await clienteApi.post('ventas', {
       idUsuario: Number(sesion.userId || 1),
@@ -351,6 +443,8 @@ async function guardarCambios() {
     nombreCliente.value = 'S/N'
     documentoCliente.value = ''
     notify.success('Venta registrada exitosamente')
+    // Refresco el catálogo para que el stock mostrado quede actualizado.
+    void cargarDatos()
     if (tipoPago.value === 'EFECTIVO' && cambio > 0) {
       notify.info(`Cambio a devolver: ${formatearMoneda(cambio)}`)
     }
@@ -506,6 +600,10 @@ async function guardarCambios() {
           <small v-if="pantallasFiltradas.length === 0" class="text-muted">
             No se encontraron pantallas con esa búsqueda.
           </small>
+          <small v-else-if="idPantalla" class="text-muted d-block mt-1">
+            Stock en {{ nombreAlmacenSeleccionado || 'la sucursal' }}:
+            <span class="fw-bold">{{ stockPantallaSeleccionada }}</span> unidad(es)
+          </small>
         </div>
         <div class="col-6 col-md-3">
           <label class="fw-semibold d-block mb-1">Cantidad a sumar</label>
@@ -522,13 +620,18 @@ async function guardarCambios() {
           class="d-flex justify-content-between align-articulos-center border-bottom py-2 gap-2">
           <div class="flex-grow-1">
             <div class="fw-bold">{{ articulo.nombre }}</div>
-            <div class="small text-muted">Bs. {{ articulo.precioUnitario.toFixed(2) }} c/u</div>
+            <div class="small text-muted">
+              Bs. {{ articulo.precioUnitario.toFixed(2) }} c/u · Stock:
+              {{ stockEnAlmacen(articulo.idPantalla) }}
+            </div>
           </div>
 
           <div class="d-flex align-articulos-center gap-1">
             <Button type="button" label="-" size="small" severity="secondary" @click="cambiarCantidadItem(idx, -1)" />
             <span class="px-3 fw-bold">{{ articulo.cantidad }}</span>
-            <Button type="button" label="+" size="small" severity="info" @click="cambiarCantidadItem(idx, 1)" />
+            <Button type="button" label="+" size="small" severity="info"
+              :disabled="articulo.cantidad >= stockEnAlmacen(articulo.idPantalla)"
+              @click="cambiarCantidadItem(idx, 1)" />
           </div>
 
           <div class="fw-bold text-end" style="min-width: 90px">

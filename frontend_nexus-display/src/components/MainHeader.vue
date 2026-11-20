@@ -205,8 +205,10 @@ watch(
         </div>
       </div>
     </div>
-
-    <Menu ref="adminMenuRef" :model="adminItems" popup @show="menuAdminAbierto = true"
+    <!-- El menú se dibuja en el body, pero la cabecera fija tiene z-index 1030:
+         subo el z-index del desplegable para que su primera opción no quede
+         tapada por la cabecera. -->
+    <Menu ref="adminMenuRef" :model="adminItems" popup :base-z-index="1100" @show="menuAdminAbierto = true"
       @hide="menuAdminAbierto = false" />
   </header>
 </template>
